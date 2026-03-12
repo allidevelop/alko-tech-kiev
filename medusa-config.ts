@@ -33,6 +33,14 @@ module.exports = defineConfig({
             resolve: "./src/modules/monobank-payment",
             id: "monobank",
           },
+          {
+            resolve: "./src/modules/liqpay-payment",
+            id: "liqpay-payment",
+            options: {
+              publicKey: process.env.LIQPAY_PUBLIC_KEY,
+              privateKey: process.env.LIQPAY_PRIVATE_KEY,
+            },
+          },
         ],
       },
     },
