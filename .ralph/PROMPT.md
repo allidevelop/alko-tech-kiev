@@ -9,7 +9,7 @@
 
 Проект состоит из двух частей:
 - **Backend (Medusa)**: `/home/developer/projects/alko-store/` — порт 9000
-- **Storefront (Next.js)**: `/home/developer/projects/alko-store-storefront/` — порт 8000
+- **Storefront (Next.js)**: `/home/developer/projects/alko-store-storefront/` — порт 3104
 
 ## Current Objectives
 
@@ -22,7 +22,7 @@
 - **Frontend**: Next.js (Medusa Starter Storefront), Tailwind CSS
 - **DB**: PostgreSQL — `medusa_alko` на `localhost:5432`
 - **Backend port**: 9000 (Medusa default)
-- **Storefront port**: 8000 (Next.js storefront default)
+- **Storefront port**: 3104 (изменён с дефолтного 8000, т.к. 8000 занят)
 
 ### Database
 ```
@@ -37,8 +37,13 @@ DATABASE_URL=postgres://medusa_alko:medusa_alko_2026@localhost:5432/medusa_alko
 - Параметры: Штрихкод, Вага, Серія, Гарантія, Виробник, Тип, Ширина захвату и др.
 
 ### API Keys
-- **Nova Poshta API**: `05a0e1a779265accf96c4dfdbd9fde4c`
+- **Nova Poshta API**: env var `NOVAPOSHTA_API_KEY=05a0e1a779265accf96c4dfdbd9fde4c`
 - **Monobank Token**: `mzmCQy1XQBw1f4C1wqmvMww`
+
+### Документация по модулям
+- **Nova Poshta Module** (полная реализация): `.ralph/docs/NOVA-POSHTA-MODULE.md`
+  - Содержит: API-клиент, типы, Fulfillment Provider, API route, frontend компоненты
+  - ОБЯЗАТЕЛЬНО прочитай этот файл перед Phase 2 и Phase 5
 
 ### Medusa v2 Architecture
 
@@ -67,7 +72,7 @@ npx medusa exec ./src/scripts/seed.ts  # Seed data
 
 # Storefront
 cd /home/developer/projects/alko-store-storefront
-npm run dev                    # Start storefront (port 8000)
+npm run dev                    # Start storefront (port 3104)
 npm run build                  # Build
 ```
 

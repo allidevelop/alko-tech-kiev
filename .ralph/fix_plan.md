@@ -22,25 +22,36 @@
 
 ## Phase 2: Backend — Интеграция с Новой Поштой
 
-- [ ] 2.1 Создать модуль Fulfillment Provider для Нової Пошти (`src/modules/nova-poshta/`)
-  - API Key: `05a0e1a779265accf96c4dfdbd9fde4c`
-  - Реализовать Medusa Fulfillment Provider interface
-  - API эндпоинты Нової Пошти:
-    - `Address/searchSettlements` — поиск населённых пунктов
-    - `AddressGeneral/getWarehouses` — получить отделения/поштомати
-    - `InternetDocument/save` — создать ТТН (накладную)
-    - `InternetDocument/getDocumentPrice` — рассчитать стоимость доставки
-  - Базовый URL: `https://api.novaposhta.ua/v2.0/json/`
+**ВАЖНО**: Подробная документация по реализации — `.ralph/docs/NOVA-POSHTA-MODULE.md`. Прочитай этот файл ПЕРЕД началом работы — он содержит готовые типы, API-клиент, провайдер и API route.
 
-- [ ] 2.2 Создать API routes для поиска отделений (`src/api/store/nova-poshta/`)
-  - `GET /store/nova-poshta/cities?q=Київ` — поиск городов
-  - `GET /store/nova-poshta/warehouses?cityRef=XXX` — отделения в городе
-  - Кэширование результатов (в памяти или Redis)
+- [ ] 2.1 Создать API-клиент Нової Пошти (`src/modules/nova-poshta-fulfillment/lib/nova-poshta.ts`)
+  - Env: `NOVAPOSHTA_API_KEY` (уже в .env как `NOVA_POSHTA_API_KEY` — переименуй в `NOVAPOSHTA_API_KEY`)
+  - Base URL: `https://api.novaposhta.ua/v2.0/json/` (всегда POST)
+  - API key передаётся в body (НЕ в headers!)
+  - Функция `searchCities(query)` → `Address.searchSettlements`
+    - ВАЖНО: возвращай `DeliveryCity` как `ref`, НЕ `Ref` (Settlement ref) — это разные поля!
+  - Функция `getWarehouses(cityRef, query?)` → `Address.getWarehouses`
+  - Функция `isConfigured()` → проверка наличия API ключа
+  - Типы: `NpCity { ref, name, fullName, area, settlementRef, warehouseCount }`, `NpWarehouse { ref, number, description, shortAddress, cityRef, typeRef }`
 
-- [ ] 2.3 Зарегистрировать fulfillment provider в Medusa
-  - Добавить модуль в `medusa-config.ts`
-  - Настроить shipping options (доставка на відділення, поштомат, кур'єр)
-  - Тестировать расчёт стоимости
+- [ ] 2.2 Создать Fulfillment Provider (`src/modules/nova-poshta-fulfillment/service.ts`)
+  - Extends `AbstractFulfillmentProviderService` из `@medusajs/framework/utils`
+  - `static identifier = "nova-poshta"`
+  - `getFulfillmentOptions()` → 2 опции: `nova-poshta-warehouse` и `nova-poshta-courier`
+  - `validateFulfillmentData()` → проверяет city_ref, city_name, warehouse_description
+  - `calculatePrice()` → пока flat rate: 70 UAH (warehouse), 120 UAH (courier). Цены в копійках: 7000, 12000
+  - `createFulfillment()` → сохраняет city_name, warehouse_description в data
+  - Регистрация: `index.ts` → `ModuleProvider(Modules.FULFILLMENT, { services: [NovaPoshtaFulfillmentService] })`
+
+- [ ] 2.3 Создать API Route для автокомплита (`src/api/store/nova-poshta/route.ts`)
+  - `POST /store/nova-poshta` с body `{ action: "searchCities", query: "Ки" }` или `{ action: "getWarehouses", cityRef: "..." }`
+  - Использует `MedusaRequest`/`MedusaResponse` из `@medusajs/framework/http`
+  - Проксирует запросы к API-клиенту (скрывает API key)
+
+- [ ] 2.4 Зарегистрировать в `medusa-config.ts` и тестировать
+  - Добавить в `modules[]`: `{ resolve: "@medusajs/medusa/fulfillment", options: { providers: [{ resolve: "./src/modules/nova-poshta-fulfillment", id: "nova-poshta" }] } }`
+  - Запустить backend, проверить `POST /store/nova-poshta { action: "searchCities", query: "Київ" }`
+  - В Admin → Regions → Ukraine → добавить shipping options
 
 ## Phase 3: Backend — Платёжные системы
 
@@ -83,23 +94,30 @@
   - Пагінація
   - Карточки товаров с изображениями, ценой, кнопкой "В кошик"
 
-## Phase 5: Storefront — Checkout с Новой Поштой
+## Phase 5: Storefront — Checkout с Новой Поштою
 
-- [ ] 5.1 Форма доставки
-  - Автокомплит города Нової Пошти (поиск через API)
-  - Выбор отделения/поштомату из списка
-  - Отображение стоимости доставки
-  - Поля: ПІБ одержувача, телефон
+**ВАЖНО**: Документация по компонентам — `.ralph/docs/NOVA-POSHTA-MODULE.md` (Layer 3: Frontend Components)
 
-- [ ] 5.2 Форма оплаты
-  - Выбор: Monobank / LiqPay / Оплата при отриманні (накладний платіж)
-  - Редирект на страницу оплаты (Monobank/LiqPay)
-  - Страница успешной оплаты / ошибки
+- [ ] 5.1 Компонент NovaPoshtaCitySelect (автокомплит міст)
+  - Storefront: `/home/developer/projects/alko-store-storefront/`
+  - Пользователь вводит >= 2 символів → debounce 300ms → fetch `POST {MEDUSA_BACKEND_URL}/store/nova-poshta { action: "searchCities", query }`
+  - Dropdown с cityName, fullName, warehouseCount
+  - При выборе: `onSelect(city)` с { ref (DeliveryCity!), name, fullName, area, warehouseCount }
+  - Keyboard: Enter = первый вариант, Escape = закрыть
+  - Иконки: spinner (загрузка), checkmark (выбрано), search (по умолчанию)
 
-- [ ] 5.3 Страница заказа
-  - Підтвердження замовлення
-  - Номер ТТН (когда создана)
-  - Статус замовлення
+- [ ] 5.2 Компонент NovaPoshtaWarehouseSelect (автокомплит відділень)
+  - Получает `cityRef` prop (из city selection)
+  - При смене cityRef — eager load ВСЕХ відділень для города
+  - Пользовательский ввод фильтрует локально (без API call), debounce 150ms
+  - При смене города — сброс выбранного відділення
+  - Плейсхолдер "Спочатку оберіть місто" когда нет cityRef
+
+- [ ] 5.3 Интеграция checkout формы
+  - Форма доставки: ПІБ одержувача, телефон (+380), місто (NovaPoshtaCitySelect), відділення (NovaPoshtaWarehouseSelect)
+  - При підтвердженні: `medusa.carts.addShippingMethod(cartId, { option_id, data: { city_ref, city_name, warehouse_description } })`
+  - Форма оплати: Monobank / Оплата при отриманні
+  - Підтвердження замовлення, статус
 
 ## Phase 6: Финализация
 
@@ -111,7 +129,7 @@
 
 - [ ] 6.2 PM2 и production deploy
   - Настроить PM2 для backend (порт 9000)
-  - Настроить PM2 для storefront (порт 8000)
+  - Настроить PM2 для storefront (порт 3104)
   - `npm run build` для обоих
   - Проверить production mode
 

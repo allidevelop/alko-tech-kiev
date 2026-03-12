@@ -17,7 +17,7 @@ Admin panel: http://localhost:9000/app
 ```bash
 cd /home/developer/projects/alko-store-storefront
 npm install
-npm run dev          # Development mode, port 8000
+npm run dev          # Development mode, port 3104
 npm run build        # Production build
 npm run start        # Production start
 ```
