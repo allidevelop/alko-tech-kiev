@@ -25,5 +25,16 @@ module.exports = defineConfig({
         ],
       },
     },
+    {
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        providers: [
+          {
+            resolve: "./src/modules/monobank-payment",
+            id: "monobank",
+          },
+        ],
+      },
+    },
   ],
 })
