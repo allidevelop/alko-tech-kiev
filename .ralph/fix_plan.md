@@ -55,24 +55,45 @@
 
 ## Phase 3: Backend — Платёжные системы
 
-- [ ] 3.1 Создать Payment Provider для Monobank (`src/modules/monobank/`)
-  - Token: `mzmCQy1XQBw1f4C1wqmvMww`
-  - Monobank Acquiring API: `https://api.monobank.ua/api/merchant/invoice/create`
-  - Реализовать Medusa Payment Provider interface
-  - Создание инвойса → редирект на оплату → webhook подтверждения
-  - Поля: amount (в копійках), merchantPaymInfo (reference, destination), redirectUrl, webHookUrl
+**ВАЖНО**: Подробная документация — `.ralph/docs/MONOBANK-PAYMENT-MODULE.md`. Прочитай ПЕРЕД началом работы — содержит готовый код провайдера, API-клиент, верификацию подписи, webhook handler.
 
-- [ ] 3.2 Создать Payment Provider для LiqPay (`src/modules/liqpay/`)
+- [ ] 3.1 Создать API-клиент Monobank (`src/modules/monobank-payment/lib/monobank.ts`)
+  - Env: `MONOBANK_TOKEN` (уже в .env)
+  - Base URL: `https://api.monobank.ua`, аутентификация через header `X-Token`
+  - Все суммы в КОПІЙКАХ (1 UAH = 100 копійок), код валюти = 980
+  - Функция `createInvoice(params)` → `POST /api/merchant/invoice/create`
+    - Параметры: amount (копійки), ccy=980, redirectUrl, webHookUrl, merchantPaymInfo { reference, destination, basketOrder[] }
+    - Возвращает: { invoiceId, pageUrl } — pageUrl для редиректа клієнта
+  - Функция `getInvoiceStatus(invoiceId)` → `GET /api/merchant/invoice/status`
+  - Функція `verifyWebhookSignature(bodyString, xSignBase64)` → ECDSA SHA256 верифікація
+    - Public key: `GET /api/merchant/pubkey` (кешувати!)
+    - КРИТИЧНО: верифікувати підпис ДО парсингу JSON body
+  - Типи: `MonoInvoiceStatus`, `WebhookBody`, `CreateInvoiceParams`, `CreateInvoiceResult`
+
+- [ ] 3.2 Создать Payment Provider (`src/modules/monobank-payment/service.ts`)
+  - Extends `AbstractPaymentProvider` з `@medusajs/framework/utils`
+  - `static identifier = "monobank"`
+  - `initiatePayment()` → createInvoice, повернути { invoiceId, pageUrl, monoStatus } в session data
+    - webhookUrl: `${MEDUSA_BACKEND_URL}/hooks/payment/monobank_monobank`
+    - redirectUrl: `${STORE_URL}/checkout/success`
+  - `authorizePayment()` → перевірити статус через getInvoiceStatus
+  - `capturePayment()` → no-op (debit mode = auto-capture)
+  - `getPaymentStatus()` → маппінг monoStatus → PaymentSessionStatus
+  - `getWebhookActionAndData()` → верифікація підпису + маппінг status → PaymentActions
+    - success → PaymentActions.AUTHORIZED
+    - failure/expired → PaymentActions.FAILED
+  - Реєстрація: `index.ts` → `ModuleProvider(Modules.PAYMENT, { services: [...] })`
+
+- [ ] 3.3 Создать Payment Provider для LiqPay (`src/modules/liqpay/`) — ЗАГЛУШКА
   - LiqPay API: `https://www.liqpay.ua/api/3/checkout`
-  - Формирование data + signature (base64 + SHA1)
-  - Параметры: version=3, action=pay, amount, currency=UAH, description, order_id
-  - Public/Private key нужно будет получить у пользователя (пока заглушка)
-  - Callback URL для server-to-server уведомлений
+  - Public/Private key поки немає — створити заглушку з TODO
+  - Реалізувати пізніше коли будуть ключі
 
-- [ ] 3.3 Зарегистрировать payment providers в Medusa
-  - Добавить модули в `medusa-config.ts`
-  - Привязать к региону Україна
-  - Настроить webhook endpoints
+- [ ] 3.4 Зарегистрировать payment providers в `medusa-config.ts`
+  - Додати Monobank: `{ resolve: "@medusajs/medusa/payment", options: { providers: [{ resolve: "./src/modules/monobank-payment", id: "monobank" }] } }`
+  - В Admin → Settings → Regions → Ukraine → додати Monobank як payment provider
+  - Додати env: `STORE_URL=http://localhost:3104`, `MEDUSA_BACKEND_URL=http://localhost:9000`
+  - Тестувати: створити payment session → перевірити що pageUrl повертається
 
 ## Phase 4: Storefront — Украинская локализация
 

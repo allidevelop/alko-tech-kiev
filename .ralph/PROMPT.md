@@ -44,6 +44,10 @@ DATABASE_URL=postgres://medusa_alko:medusa_alko_2026@localhost:5432/medusa_alko
 - **Nova Poshta Module** (полная реализация): `.ralph/docs/NOVA-POSHTA-MODULE.md`
   - Содержит: API-клиент, типы, Fulfillment Provider, API route, frontend компоненты
   - ОБЯЗАТЕЛЬНО прочитай этот файл перед Phase 2 и Phase 5
+- **Monobank Payment Module** (полная реализация): `.ralph/docs/MONOBANK-PAYMENT-MODULE.md`
+  - Содержит: API-клиент, createInvoice, ECDSA webhook verification, Payment Provider, webhook handler
+  - Redirect-based flow: initiatePayment → pageUrl → webhook → AUTHORIZED
+  - ОБЯЗАТЕЛЬНО прочитай этот файл перед Phase 3
 
 ### Medusa v2 Architecture
 
