@@ -4,12 +4,26 @@ import {
   PaymentSessionStatus,
 } from "@medusajs/framework/utils"
 import type {
-  CreatePaymentProviderSession,
-  UpdatePaymentProviderSession,
+  InitiatePaymentInput,
+  InitiatePaymentOutput,
+  UpdatePaymentInput,
+  UpdatePaymentOutput,
+  AuthorizePaymentInput,
+  AuthorizePaymentOutput,
+  CapturePaymentInput,
+  CapturePaymentOutput,
+  RefundPaymentInput,
+  RefundPaymentOutput,
+  CancelPaymentInput,
+  CancelPaymentOutput,
+  DeletePaymentInput,
+  DeletePaymentOutput,
+  GetPaymentStatusInput,
+  GetPaymentStatusOutput,
+  RetrievePaymentInput,
+  RetrievePaymentOutput,
   ProviderWebhookPayload,
   WebhookActionResult,
-  PaymentProviderError,
-  PaymentProviderSessionResponse,
 } from "@medusajs/framework/types"
 import {
   createInvoice,
@@ -27,10 +41,14 @@ type MonoSessionData = {
 class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   static identifier = "monobank"
 
+  constructor(container: any, options: any) {
+    super(container, options)
+  }
+
   async initiatePayment(
-    input: CreatePaymentProviderSession
-  ): Promise<PaymentProviderSessionResponse> {
-    const { amount, currency_code, context } = input
+    input: InitiatePaymentInput
+  ): Promise<InitiatePaymentOutput> {
+    const { amount, currency_code, context, data } = input
 
     const storeUrl =
       process.env.STORE_URL ||
@@ -39,112 +57,108 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
     const backendUrl =
       process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
 
+    const sessionId = (context as any)?.session_id || ""
+
     const invoice = await createInvoice({
-      amount,
-      orderId: context.session_id as string,
-      orderDescription: `Замовлення AL-KO — ${context.session_id}`,
+      amount: Number(amount),
+      orderId: sessionId,
+      orderDescription: `Замовлення AL-KO — ${sessionId}`,
       redirectUrl: `${storeUrl}/checkout/success`,
       webHookUrl: `${backendUrl}/hooks/payment/monobank_monobank`,
     })
 
     return {
+      id: invoice.invoiceId,
+      status: PaymentSessionStatus.PENDING,
       data: {
         invoiceId: invoice.invoiceId,
         pageUrl: invoice.pageUrl,
         monoStatus: "created",
-      } as unknown as Record<string, unknown>,
+      },
     }
   }
 
   async authorizePayment(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<
-    | PaymentProviderError
-    | { status: PaymentSessionStatus; data: Record<string, unknown> }
-  > {
-    const data = paymentSessionData as unknown as MonoSessionData
+    input: AuthorizePaymentInput
+  ): Promise<AuthorizePaymentOutput> {
+    const sessionData = input.data as unknown as MonoSessionData
 
     try {
-      const statusResult = await getInvoiceStatus(data.invoiceId)
+      const statusResult = await getInvoiceStatus(sessionData.invoiceId)
       const newData = {
-        ...data,
+        ...sessionData,
         monoStatus: statusResult.status,
-      } as unknown as Record<string, unknown>
+      }
 
       if (statusResult.status === "success") {
-        return { status: PaymentSessionStatus.AUTHORIZED, data: newData }
+        return { status: PaymentSessionStatus.AUTHORIZED, data: newData as unknown as Record<string, unknown> }
       }
       if (
         statusResult.status === "failure" ||
         statusResult.status === "expired"
       ) {
-        return { status: PaymentSessionStatus.ERROR, data: newData }
+        return { status: PaymentSessionStatus.ERROR, data: newData as unknown as Record<string, unknown> }
       }
-      return { status: PaymentSessionStatus.PENDING, data: newData }
+      return { status: PaymentSessionStatus.PENDING, data: newData as unknown as Record<string, unknown> }
     } catch (error) {
-      return {
-        error: (error as Error).message,
-        code: "MONOBANK_STATUS_CHECK_FAILED",
-        detail: "Failed to check payment status with Monobank",
-      }
+      throw error
     }
   }
 
   async capturePayment(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse["data"]> {
-    return paymentSessionData
+    input: CapturePaymentInput
+  ): Promise<CapturePaymentOutput> {
+    return { data: input.data }
   }
 
   async refundPayment(
-    paymentSessionData: Record<string, unknown>,
-    refundAmount: number
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse["data"]> {
-    return paymentSessionData
+    input: RefundPaymentInput
+  ): Promise<RefundPaymentOutput> {
+    return { data: input.data }
   }
 
   async cancelPayment(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse["data"]> {
-    return paymentSessionData
+    input: CancelPaymentInput
+  ): Promise<CancelPaymentOutput> {
+    return { data: input.data }
   }
 
   async deletePayment(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse["data"]> {
-    return paymentSessionData
+    input: DeletePaymentInput
+  ): Promise<DeletePaymentOutput> {
+    return { data: input.data }
   }
 
   async getPaymentStatus(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<PaymentSessionStatus> {
-    const data = paymentSessionData as unknown as MonoSessionData
+    input: GetPaymentStatusInput
+  ): Promise<GetPaymentStatusOutput> {
+    const data = input.data as unknown as MonoSessionData
 
-    switch (data.monoStatus) {
+    switch (data?.monoStatus) {
       case "success":
-        return PaymentSessionStatus.AUTHORIZED
+        return { status: PaymentSessionStatus.AUTHORIZED }
       case "failure":
       case "expired":
-        return PaymentSessionStatus.ERROR
+        return { status: PaymentSessionStatus.ERROR }
       case "reversed":
-        return PaymentSessionStatus.CANCELED
+        return { status: PaymentSessionStatus.CANCELED }
       case "processing":
       case "hold":
-        return PaymentSessionStatus.PENDING
+        return { status: PaymentSessionStatus.PENDING }
       default:
-        return PaymentSessionStatus.PENDING
+        return { status: PaymentSessionStatus.PENDING }
     }
   }
 
   async retrievePayment(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse["data"]> {
-    return paymentSessionData
+    input: RetrievePaymentInput
+  ): Promise<RetrievePaymentOutput> {
+    return { data: input.data }
   }
 
   async updatePayment(
-    input: UpdatePaymentProviderSession
-  ): Promise<PaymentProviderError | PaymentProviderSessionResponse> {
+    input: UpdatePaymentInput
+  ): Promise<UpdatePaymentOutput> {
     return { data: input.data }
   }
 
@@ -177,8 +191,8 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
         return {
           action: PaymentActions.AUTHORIZED,
           data: {
-            session_id: webhookData.reference,
-            amount: webhookData.finalAmount,
+            session_id: webhookData.reference ?? "",
+            amount: webhookData.finalAmount ?? 0,
           },
         }
       case "failure":
@@ -186,8 +200,8 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
         return {
           action: PaymentActions.FAILED,
           data: {
-            session_id: webhookData.reference,
-            amount: webhookData.finalAmount,
+            session_id: webhookData.reference ?? "",
+            amount: webhookData.finalAmount ?? 0,
           },
         }
       default:

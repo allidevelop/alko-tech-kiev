@@ -95,6 +95,14 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
     return { data: input.data }
   }
 
+  async retrievePayment(input: any) {
+    return { data: input.data }
+  }
+
+  async updatePayment(input: any) {
+    return { data: input.data }
+  }
+
   async getPaymentStatus(input: any) {
     const status = input.data?.status as string
     switch (status) {

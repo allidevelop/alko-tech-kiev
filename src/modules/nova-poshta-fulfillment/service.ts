@@ -73,18 +73,18 @@ class NovaPoshtaFulfillmentService extends AbstractFulfillmentProviderService {
     optionData: Record<string, unknown>,
     data: Record<string, unknown>,
     context: Record<string, unknown>
-  ): Promise<number> {
+  ): Promise<{ calculated_amount: number; is_calculated_price_tax_inclusive: boolean }> {
     const optionId = optionData.id as string
+    let amount = 0
     if (optionId === "nova-poshta-warehouse") {
-      return 7000 // 70.00 UAH
+      amount = 7000 // 70.00 UAH
+    } else if (optionId === "nova-poshta-courier") {
+      amount = 12000 // 120.00 UAH
     }
-    if (optionId === "nova-poshta-courier") {
-      return 12000 // 120.00 UAH
-    }
-    return 0
+    return { calculated_amount: amount, is_calculated_price_tax_inclusive: true }
   }
 
-  async canCalculate(data: Record<string, unknown>): Promise<boolean> {
+  async canCalculate(data: any): Promise<boolean> {
     return true
   }
 
@@ -93,18 +93,24 @@ class NovaPoshtaFulfillmentService extends AbstractFulfillmentProviderService {
     items: Record<string, unknown>[],
     order: Record<string, unknown> | undefined,
     fulfillment: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
+  ) {
     return {
-      city_name: data.city_name,
-      warehouse_description: data.warehouse_description,
-      address: data.address,
+      data: {
+        city_name: data.city_name,
+        warehouse_description: data.warehouse_description,
+        address: data.address,
+      },
+      labels: [],
     }
   }
 
   async createReturnFulfillment(
     fulfillment: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
-    return (fulfillment.data as Record<string, unknown>) || {}
+  ) {
+    return {
+      data: (fulfillment.data as Record<string, unknown>) || {},
+      labels: [],
+    }
   }
 
   async cancelFulfillment(

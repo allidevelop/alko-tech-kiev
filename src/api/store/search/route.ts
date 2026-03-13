@@ -30,7 +30,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       ],
       filters: {
         q,
-      },
+      } as any,
       pagination: {
         take: Math.min(limit, 12),
         skip: 0,
@@ -43,7 +43,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       fields: ["id", "name", "handle", "parent_category_id"],
       filters: {
         q,
-      },
+      } as any,
       pagination: {
         take: 5,
         skip: 0,
