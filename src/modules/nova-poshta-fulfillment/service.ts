@@ -1,5 +1,6 @@
 import { AbstractFulfillmentProviderService } from "@medusajs/framework/utils"
 import type { FulfillmentOption } from "@medusajs/framework/types"
+// NP price calculation kept in lib for potential future use (API route)
 
 class NovaPoshtaFulfillmentService extends AbstractFulfillmentProviderService {
   static identifier = "nova-poshta"
@@ -33,17 +34,13 @@ class NovaPoshtaFulfillmentService extends AbstractFulfillmentProviderService {
       const cityName = data.city_name as string
       const warehouseDescription = data.warehouse_description as string
 
-      if (!cityRef || !warehouseDescription) {
-        throw new Error(
-          "Місто та відділення обов'язкові для доставки Новою Поштою"
-        )
-      }
-
+      // Allow selecting shipping method without NP details yet
+      // (city/warehouse will be validated at order creation)
       return {
         ...data,
-        city_ref: cityRef,
-        city_name: cityName,
-        warehouse_description: warehouseDescription,
+        ...(cityRef && { city_ref: cityRef }),
+        ...(cityName && { city_name: cityName }),
+        ...(warehouseDescription && { warehouse_description: warehouseDescription }),
       }
     }
 
@@ -70,18 +67,13 @@ class NovaPoshtaFulfillmentService extends AbstractFulfillmentProviderService {
   }
 
   async calculatePrice(
-    optionData: Record<string, unknown>,
-    data: Record<string, unknown>,
-    context: Record<string, unknown>
+    _optionData: Record<string, unknown>,
+    _data: Record<string, unknown>,
+    _context: Record<string, unknown>
   ): Promise<{ calculated_amount: number; is_calculated_price_tax_inclusive: boolean }> {
-    const optionId = optionData.id as string
-    let amount = 0
-    if (optionId === "nova-poshta-warehouse") {
-      amount = 7000 // 70.00 UAH
-    } else if (optionId === "nova-poshta-courier") {
-      amount = 12000 // 120.00 UAH
-    }
-    return { calculated_amount: amount, is_calculated_price_tax_inclusive: true }
+    // Delivery cost is paid at Nova Poshta according to their tariffs.
+    // We don't include shipping cost in the order total.
+    return { calculated_amount: 0, is_calculated_price_tax_inclusive: true }
   }
 
   async canCalculate(data: any): Promise<boolean> {

@@ -21,7 +21,7 @@ module.exports = {
       name: "alko-storefront",
       cwd: "/home/developer/projects/alko-store-storefront",
       script: "./node_modules/.bin/next",
-      args: "dev -p 3104",
+      args: "start -p 3104",
       exec_mode: "fork",
       env: {
         NODE_ENV: "development",

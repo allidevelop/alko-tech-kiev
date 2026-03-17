@@ -107,6 +107,75 @@ export async function searchCities(
   }))
 }
 
+// Sender city ref: смт Велика Димерка, Броварський р-н, Київська обл.
+const SENDER_CITY_REF = "e03f3a9e-a05d-11e3-9fa0-0050568002cf"
+
+export interface NpDeliveryPrice {
+  cost: number
+  costRedelivery: number
+}
+
+export async function calculateDeliveryPrice(params: {
+  recipientCityRef: string
+  weight: number // kg
+  length: number // cm
+  width: number // cm
+  height: number // cm
+  assessedValue: number // UAH
+  serviceType?: "WarehouseWarehouse" | "WarehouseDoors"
+  isCOD?: boolean
+}): Promise<NpDeliveryPrice | null> {
+  const {
+    recipientCityRef,
+    weight,
+    length,
+    width,
+    height,
+    assessedValue,
+    serviceType = "WarehouseWarehouse",
+    isCOD = false,
+  } = params
+
+  if (!recipientCityRef) return null
+
+  interface RawPrice {
+    Cost: number
+    CostRedelivery?: number
+    AssessedCost: number
+  }
+
+  const methodProperties: Record<string, unknown> = {
+    CitySender: SENDER_CITY_REF,
+    CityRecipient: recipientCityRef,
+    Weight: String(Math.max(weight, 0.1)),
+    ServiceType: serviceType,
+    Cost: String(assessedValue),
+    CargoType: "Parcel",
+    SeatsAmount: "1",
+  }
+
+  // Include COD commission calculation when payment is cash on delivery
+  if (isCOD && assessedValue > 0) {
+    methodProperties.RedeliveryCalculate = {
+      CargoType: "Money",
+      Amount: String(assessedValue),
+    }
+  }
+
+  const data = await npFetch<RawPrice>(
+    "InternetDocument",
+    "getDocumentPrice",
+    methodProperties
+  )
+
+  if (!data.length) return null
+
+  return {
+    cost: data[0].Cost,
+    costRedelivery: data[0].CostRedelivery ?? 0,
+  }
+}
+
 export async function getWarehouses(
   cityRef: string,
   query?: string,

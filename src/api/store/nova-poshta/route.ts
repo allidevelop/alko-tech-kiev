@@ -5,14 +5,22 @@ import type {
 import {
   searchCities,
   getWarehouses,
+  calculateDeliveryPrice,
   isConfigured,
 } from "../../../modules/nova-poshta-fulfillment/lib/nova-poshta"
 
 interface NpRequestBody {
-  action: "searchCities" | "getWarehouses"
+  action: "searchCities" | "getWarehouses" | "calculatePrice"
   query?: string
   cityRef?: string
   page?: number
+  // calculatePrice params
+  recipientCityRef?: string
+  weight?: number
+  length?: number
+  width?: number
+  height?: number
+  assessedValue?: number
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -41,10 +49,27 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       const warehouses = await getWarehouses(
         body.cityRef,
         body.query,
-        50,
+        body.query ? 50 : 500,
         body.page ?? 1
       )
       return res.json({ success: true, data: warehouses })
+    }
+
+    if (body.action === "calculatePrice") {
+      if (!body.recipientCityRef) {
+        return res
+          .status(400)
+          .json({ success: false, data: null, error: "recipientCityRef is required" })
+      }
+      const result = await calculateDeliveryPrice({
+        recipientCityRef: body.recipientCityRef,
+        weight: body.weight ?? 1,
+        length: body.length ?? 30,
+        width: body.width ?? 20,
+        height: body.height ?? 20,
+        assessedValue: body.assessedValue ?? 1000,
+      })
+      return res.json({ success: true, data: result })
     }
 
     return res

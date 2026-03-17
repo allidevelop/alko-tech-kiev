@@ -1,3 +1,6 @@
+## Language
+Always respond in Russian. Exception: technical terms that are commonly written in English (API, webhook, middleware, etc.).
+
 # AL-KO Garden Store
 
 Medusa.js v2 e-commerce backend for AL-KO garden equipment store (Ukrainian market).
@@ -38,3 +41,10 @@ Medusa v2 modular architecture:
 - `src/scripts/` — import scripts
 - `src/workflows/` — business logic workflows
 - `src/subscribers/` — event handlers
+
+## Documentation & Reference
+- **FULL Medusa docs**: `.ralph/docs/medusa-llms-full.txt` (6.3 MB, 166K lines — ALL of Medusa v2 docs in one file)
+- **Medusa MCP Server**: connected at `https://docs.medusajs.com/mcp` — query for real-time docs
+- **Agent Skills**: `.ralph/docs/medusa-skills/` + `.ralph/docs/storefront-skills/` — official best practices
+- **Module docs**: `.ralph/docs/NOVA-POSHTA-MODULE.md`, `MONOBANK-PAYMENT-MODULE.md`, `LIQPAY-PAYMENT-MODULE.md`
+- **Payment Provider API**: `.ralph/docs/MEDUSA-PAYMENT-PROVIDER-REFERENCE.md`

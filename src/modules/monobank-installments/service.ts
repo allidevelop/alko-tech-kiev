@@ -26,20 +26,21 @@ import type {
   WebhookActionResult,
 } from "@medusajs/framework/types"
 import {
-  createInvoice,
-  getInvoiceStatus,
+  createOrder,
+  getOrderState,
+  confirmOrder,
+  rejectOrder,
   verifyWebhookSignature,
-  type MonoInvoiceStatus,
-} from "./lib/monobank"
+  type InstallmentOrderState,
+} from "./lib/monobank-installments"
 
-type MonoSessionData = {
-  invoiceId: string
-  pageUrl: string
-  monoStatus: string
+type InstallmentSessionData = {
+  orderId: string
+  monoState: InstallmentOrderState
 }
 
-class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
-  static identifier = "monobank"
+class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
+  static identifier = "monobank-installments"
 
   constructor(container: any, options: any) {
     super(container, options)
@@ -48,16 +49,10 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   async initiatePayment(
     input: InitiatePaymentInput
   ): Promise<InitiatePaymentOutput> {
-    const { amount, currency_code, context, data } = input
-
-    const storeUrl =
-      process.env.STORE_URL ||
-      process.env.STORE_CORS?.split(",")[0] ||
-      "http://localhost:3104"
-    const backendUrl =
-      process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
+    const { amount, context, data } = input
 
     const sessionId = (context as any)?.session_id || ""
+    const customerPhone = (context as any)?.customer?.phone || undefined
 
     // Customer pays only for items; shipping is paid separately at Nova Poshta.
     // item_subtotal is passed from storefront via data; fallback to full amount.
@@ -66,23 +61,28 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
       ? Number(itemSubtotal)
       : Number(amount)
 
-    console.log("[Monobank] initiatePayment — amount:", amount, "data.item_subtotal:", itemSubtotal, "chargeAmount:", chargeAmount)
+    // Build a single product line from item total
+    const products = [
+      {
+        name: `Замовлення AL-KO - ${sessionId.slice(0, 8).toUpperCase()}`,
+        count: 1,
+        sum: Math.round(chargeAmount * 100), // UAH → kopiyky
+      },
+    ]
 
-    const invoice = await createInvoice({
-      amount: Math.round(chargeAmount * 100), // Medusa stores UAH, Mono expects kopiyky
-      orderId: sessionId,
-      orderDescription: `Замовлення AL-KO — ${sessionId}`,
-      redirectUrl: `${storeUrl}/ua/order/payment-return`,
-      webHookUrl: `${backendUrl}/hooks/payment/monobank_monobank`,
+    const result = await createOrder({
+      store_order_id: sessionId,
+      client_phone: customerPhone,
+      products,
+      amount: Math.round(chargeAmount * 100), // UAH → kopiyky
     })
 
     return {
-      id: invoice.invoiceId,
+      id: result.order_id,
       status: PaymentSessionStatus.PENDING,
       data: {
-        invoiceId: invoice.invoiceId,
-        pageUrl: invoice.pageUrl,
-        monoStatus: "created",
+        orderId: result.order_id,
+        monoState: result.state,
       },
     }
   }
@@ -90,8 +90,6 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   async authorizePayment(
     input: AuthorizePaymentInput
   ): Promise<AuthorizePaymentOutput> {
-    // For redirect-based payments, always return AUTHORIZED immediately.
-    // The actual payment confirmation comes via webhook (getWebhookActionAndData).
     return {
       status: PaymentSessionStatus.AUTHORIZED,
       data: input.data as unknown as Record<string, unknown>,
@@ -101,6 +99,15 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   async capturePayment(
     input: CapturePaymentInput
   ): Promise<CapturePaymentOutput> {
+    const data = input.data as unknown as InstallmentSessionData
+    if (data?.orderId) {
+      try {
+        await confirmOrder(data.orderId)
+      } catch (error) {
+        console.error("[MonobankInstallments] confirmOrder failed:", error)
+        throw error
+      }
+    }
     return { data: input.data }
   }
 
@@ -113,6 +120,14 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   async cancelPayment(
     input: CancelPaymentInput
   ): Promise<CancelPaymentOutput> {
+    const data = input.data as unknown as InstallmentSessionData
+    if (data?.orderId) {
+      try {
+        await rejectOrder(data.orderId)
+      } catch (error) {
+        console.error("[MonobankInstallments] rejectOrder failed:", error)
+      }
+    }
     return { data: input.data }
   }
 
@@ -125,18 +140,16 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   async getPaymentStatus(
     input: GetPaymentStatusInput
   ): Promise<GetPaymentStatusOutput> {
-    const data = input.data as unknown as MonoSessionData
+    const data = input.data as unknown as InstallmentSessionData
 
-    switch (data?.monoStatus) {
-      case "success":
+    switch (data?.monoState) {
+      case "approved":
+      case "confirmed":
         return { status: PaymentSessionStatus.AUTHORIZED }
-      case "failure":
+      case "rejected":
       case "expired":
         return { status: PaymentSessionStatus.ERROR }
-      case "reversed":
-        return { status: PaymentSessionStatus.CANCELED }
-      case "processing":
-      case "hold":
+      case "created":
         return { status: PaymentSessionStatus.PENDING }
       default:
         return { status: PaymentSessionStatus.PENDING }
@@ -160,41 +173,41 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   ): Promise<WebhookActionResult> {
     const { data, rawData, headers } = payload
 
-    const xSign = (headers["x-sign"] as string) ?? ""
+    const signature = (headers["signature"] as string) ?? ""
     const bodyString =
       typeof rawData === "string" ? rawData : JSON.stringify(rawData)
 
-    const isValid = await verifyWebhookSignature(bodyString, xSign)
+    const isValid = verifyWebhookSignature(bodyString, signature)
     if (!isValid) {
-      console.error("[Monobank] Invalid webhook signature")
+      console.error("[MonobankInstallments] Invalid webhook signature")
       return { action: PaymentActions.NOT_SUPPORTED }
     }
 
     const webhookData = (
       typeof data === "string" ? JSON.parse(data) : data
     ) as {
-      invoiceId: string
-      status: MonoInvoiceStatus
-      reference?: string
-      finalAmount?: number
+      order_id: string
+      store_order_id: string
+      state: InstallmentOrderState
+      amount?: number
     }
 
-    switch (webhookData.status) {
-      case "success":
+    switch (webhookData.state) {
+      case "approved":
         return {
           action: PaymentActions.AUTHORIZED,
           data: {
-            session_id: webhookData.reference ?? "",
-            amount: webhookData.finalAmount ?? 0,
+            session_id: webhookData.store_order_id ?? "",
+            amount: webhookData.amount ?? 0,
           },
         }
-      case "failure":
+      case "rejected":
       case "expired":
         return {
           action: PaymentActions.FAILED,
           data: {
-            session_id: webhookData.reference ?? "",
-            amount: webhookData.finalAmount ?? 0,
+            session_id: webhookData.store_order_id ?? "",
+            amount: webhookData.amount ?? 0,
           },
         }
       default:
@@ -203,4 +216,4 @@ class MonobankPaymentProviderService extends AbstractPaymentProvider<{}> {
   }
 }
 
-export default MonobankPaymentProviderService
+export default MonobankInstallmentsProviderService

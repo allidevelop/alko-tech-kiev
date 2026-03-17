@@ -42,21 +42,24 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
   }
 
   async initiatePayment(input: any) {
-    const { amount, currency_code, context } = input
-
-    // Medusa passes amount in smallest units (kopiyky for UAH)
-    // LiqPay accepts in UAH — convert
-    const amountInUAH = Number(amount) / 100
+    const { amount, currency_code, context, data } = input
 
     const sessionId = context?.session_id || `liqpay_${Date.now()}`
 
+    // Customer pays only for items; shipping is paid separately at Nova Poshta.
+    // item_subtotal is passed from storefront via data; fallback to full amount.
+    const itemSubtotal = data?.item_subtotal
+    const chargeAmount = itemSubtotal != null && Number(itemSubtotal) > 0
+      ? Number(itemSubtotal)
+      : Number(amount)
+
     const formData = this.client.createPayment({
       orderId: sessionId,
-      amount: amountInUAH,
+      amount: chargeAmount,
       currency: currency_code?.toUpperCase() || "UAH",
       description: `Замовлення AL-KO Garden Store #${sessionId}`,
       serverUrl: `${process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"}/hooks/payment/liqpay-payment_liqpay`,
-      resultUrl: `${process.env.STORE_URL || "http://localhost:3104"}/order/confirmed`,
+      resultUrl: `${process.env.STORE_URL || "http://localhost:3104"}/ua/order/payment-return`,
       language: "uk",
     })
 
@@ -158,7 +161,7 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
           action: PaymentActions.AUTHORIZED,
           data: {
             session_id: decoded.order_id,
-            amount: new BigNumber(Math.round(decoded.amount * 100)),
+            amount: new BigNumber(decoded.amount),
           },
         }
       }
@@ -168,7 +171,7 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
           action: PaymentActions.CANCELED,
           data: {
             session_id: decoded.order_id,
-            amount: new BigNumber(Math.round(decoded.amount * 100)),
+            amount: new BigNumber(decoded.amount),
           },
         }
       }
@@ -178,7 +181,7 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
           action: PaymentActions.FAILED,
           data: {
             session_id: decoded.order_id,
-            amount: new BigNumber(Math.round(decoded.amount * 100)),
+            amount: new BigNumber(decoded.amount),
           },
         }
       }
@@ -187,7 +190,7 @@ class LiqPayPaymentProviderService extends AbstractPaymentProvider<Options> {
         action: PaymentActions.NOT_SUPPORTED,
         data: {
           session_id: decoded.order_id,
-          amount: new BigNumber(Math.round(decoded.amount * 100)),
+          amount: new BigNumber(decoded.amount),
         },
       }
     } catch (e) {
