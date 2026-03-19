@@ -35,8 +35,11 @@ import {
 } from "./lib/monobank-installments"
 
 type InstallmentSessionData = {
-  orderId: string
-  monoState: InstallmentOrderState
+  orderId?: string
+  monoState?: InstallmentOrderState
+  chargeAmount: number // kopiyky — already in smallest unit
+  customerPhone: string
+  sessionId: string
 }
 
 class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
@@ -46,27 +49,59 @@ class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
     super(container, options)
   }
 
+  /**
+   * Called when the customer selects this payment method (radio button click).
+   * We do NOT create a monobank order here — just store the session data.
+   */
   async initiatePayment(
     input: InitiatePaymentInput
   ): Promise<InitiatePaymentOutput> {
     const { amount, context, data } = input
 
-    const sessionId = (context as any)?.session_id || ""
-    const customerPhone = (context as any)?.customer?.phone || undefined
+    const sessionId = (context as any)?.session_id || `ALKO-${Date.now()}`
+    const customerPhone =
+      (context as any)?.customer?.phone ||
+      (context as any)?.customer?.billing_address?.phone ||
+      (context as any)?.billing_address?.phone ||
+      "+380994019521"
 
-    // Customer pays only for items; shipping is paid separately at Nova Poshta.
-    // item_subtotal is passed from storefront via data; fallback to full amount.
+    // Medusa passes amount already in smallest currency unit (kopiyky).
+    // item_subtotal from storefront is also in kopiyky.
     const itemSubtotal = (data as any)?.item_subtotal
-    const chargeAmount = itemSubtotal != null && Number(itemSubtotal) > 0
-      ? Number(itemSubtotal)
-      : Number(amount)
+    const chargeAmount =
+      itemSubtotal != null && Number(itemSubtotal) > 0
+        ? Number(itemSubtotal)
+        : Number(amount)
 
-    // Build a single product line from item total
+    return {
+      id: sessionId,
+      status: PaymentSessionStatus.PENDING,
+      data: {
+        chargeAmount,
+        customerPhone,
+        sessionId,
+      },
+    }
+  }
+
+  /**
+   * Called when the customer clicks "Покупка частинами monobank" button.
+   * THIS is where we create the monobank order.
+   */
+  async authorizePayment(
+    input: AuthorizePaymentInput
+  ): Promise<AuthorizePaymentOutput> {
+    const sessionData = input.data as unknown as InstallmentSessionData
+
+    const chargeAmount = sessionData.chargeAmount || 0
+    const customerPhone = sessionData.customerPhone || "+380994019521"
+    const sessionId = sessionData.sessionId || `ALKO-${Date.now()}`
+
     const products = [
       {
         name: `Замовлення AL-KO - ${sessionId.slice(0, 8).toUpperCase()}`,
         count: 1,
-        sum: Math.round(chargeAmount * 100), // UAH → kopiyky
+        sum: chargeAmount, // already in kopiyky
       },
     ]
 
@@ -74,25 +109,18 @@ class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
       store_order_id: sessionId,
       client_phone: customerPhone,
       products,
-      amount: Math.round(chargeAmount * 100), // UAH → kopiyky
+      amount: chargeAmount, // already in kopiyky
     })
 
     return {
-      id: result.order_id,
-      status: PaymentSessionStatus.PENDING,
+      status: PaymentSessionStatus.AUTHORIZED,
       data: {
         orderId: result.order_id,
         monoState: result.state,
-      },
-    }
-  }
-
-  async authorizePayment(
-    input: AuthorizePaymentInput
-  ): Promise<AuthorizePaymentOutput> {
-    return {
-      status: PaymentSessionStatus.AUTHORIZED,
-      data: input.data as unknown as Record<string, unknown>,
+        chargeAmount,
+        customerPhone,
+        sessionId,
+      } as unknown as Record<string, unknown>,
     }
   }
 

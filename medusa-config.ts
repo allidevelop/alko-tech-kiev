@@ -24,6 +24,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 module.exports = defineConfig({
   featureFlags: {
     caching: true,
+    translation: true,
   },
   admin: {
     vite: () => ({
@@ -53,6 +54,12 @@ module.exports = defineConfig({
     },
   ],
   modules: [
+    {
+      resolve: "./src/modules/checkbox",
+    },
+    {
+      resolve: "@medusajs/medusa/translation",
+    },
     {
       resolve: "@medusajs/medusa/caching",
       options: {

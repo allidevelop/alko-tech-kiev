@@ -39,17 +39,11 @@ export interface InstallmentProduct {
   sum: number // kopiyky
 }
 
-export interface AvailableProgram {
-  type: string
-  value: number[]
-}
-
 export interface CreateInstallmentOrderParams {
   store_order_id: string
   client_phone?: string
   products: InstallmentProduct[]
   amount: number // kopiyky
-  available_programs?: AvailableProgram[]
 }
 
 export interface CreateInstallmentOrderResult {
@@ -105,20 +99,43 @@ async function apiRequest<T>(
   return (await response.json()) as T
 }
 
+/**
+ * Create an installment order via monobank "Покупка частинами" API.
+ *
+ * API docs: https://u2.monobank.com.ua/v3/api-docs
+ * Required fields: store_order_id, client_phone, total_sum,
+ *   invoice { number, date, source }, available_programs, products
+ */
 export async function createOrder(
   params: CreateInstallmentOrderParams
 ): Promise<CreateInstallmentOrderResult> {
-  const body: Record<string, unknown> = {
-    store_order_id: params.store_order_id,
-    products: params.products,
-    amount: params.amount,
-    available_programs: params.available_programs ?? [
-      { type: "payment_count", value: [3, 6, 9, 12] },
-    ],
+  const today = new Date().toISOString().split("T")[0]
+
+  // Ensure phone starts with +380
+  let phone = params.client_phone || ""
+  if (phone && !phone.startsWith("+")) {
+    phone = "+" + phone
   }
 
-  if (params.client_phone) {
-    body.client_phone = params.client_phone
+  const body: Record<string, unknown> = {
+    store_order_id: params.store_order_id || `ALKO-${Date.now()}`,
+    total_sum: params.amount,
+    products: params.products,
+    available_programs: [
+      { type: "payment_count", available_parts_count: [3, 6, 9, 12] },
+    ],
+    invoice: {
+      number: params.store_order_id || `ALKO-${Date.now()}`,
+      date: today,
+      source: "INTERNET",
+    },
+    result_callback:
+      process.env.MONOBANK_CHAST_WEBHOOK_URL ||
+      `${process.env.BACKEND_URL || "https://alko-technics.kiev.ua"}/hooks/payment/monobank-installments_monobank-installments`,
+  }
+
+  if (phone) {
+    body.client_phone = phone
   }
 
   return apiRequest<CreateInstallmentOrderResult>(
@@ -131,31 +148,9 @@ export async function createOrder(
 export async function getOrderState(
   orderId: string
 ): Promise<OrderStateResult> {
-  const storeId = getStoreId()
-  if (!storeId) {
-    throw new Error("MONOBANK_CHAST_STORE_ID is not configured")
-  }
-
-  const url = `${getApiUrl()}/api/order/state?order_id=${encodeURIComponent(orderId)}`
-  const headers: Record<string, string> = {
-    "store-id": storeId,
-  }
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
+  return apiRequest<OrderStateResult>("POST", "/api/order/state", {
+    order_id: orderId,
   })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "")
-    console.error(
-      `[MonobankInstallments] getOrderState failed: HTTP ${response.status}`,
-      text
-    )
-    throw new Error(`Monobank Installments API error: ${response.status}`)
-  }
-
-  return (await response.json()) as OrderStateResult
 }
 
 export async function confirmOrder(orderId: string): Promise<void> {

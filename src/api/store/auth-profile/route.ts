@@ -4,6 +4,10 @@ import type {
 } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/framework/utils"
 
+// Disable default store auth (requires entity_id) so our custom middleware
+// with allowUnregistered: true can handle tokens from new Google sign-ups
+export const AUTHENTICATE = false
+
 export const GET = async (
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
@@ -25,11 +29,12 @@ export const GET = async (
     (pi: any) => pi.provider === "google"
   )
 
-  const providerMetadata = googleIdentity?.provider_metadata || {}
+  // Google provider stores profile in user_metadata, not provider_metadata
+  const metadata = googleIdentity?.user_metadata || googleIdentity?.provider_metadata || {}
 
   res.json({
-    email: (providerMetadata as any).email || "",
-    name: (providerMetadata as any).name || "",
-    picture: (providerMetadata as any).picture || "",
+    email: (metadata as any).email || "",
+    name: (metadata as any).name || "",
+    picture: (metadata as any).picture || "",
   })
 }
