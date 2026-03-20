@@ -171,9 +171,11 @@ const ProductSpecsSettingsPage = () => {
         </Button>
       </div>
 
-      {/* Create/Edit form */}
+      {/* Create/Edit modal overlay */}
       {showForm && (
-        <Container className="mb-6 p-4">
+        <>
+        <div className="fixed inset-0 bg-black/50 z-50" onClick={closeForm} />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg bg-ui-bg-base rounded-xl shadow-2xl border border-ui-border-base p-6">
           <Heading level="h2" className="mb-4">
             {editingAttr ? `Редагувати: ${editingAttr.slug}` : "Новий атрибут"}
           </Heading>
@@ -271,7 +273,8 @@ const ProductSpecsSettingsPage = () => {
               {editingAttr ? "Зберегти" : "Створити"}
             </Button>
           </div>
-        </Container>
+        </div>
+        </>
       )}
 
       {/* Table */}

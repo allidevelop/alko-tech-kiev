@@ -40,7 +40,9 @@ const ProductSpecsWidget = ({ data }: any) => {
   const fetchSpecs = () => {
     setLoading(true)
     setError(null)
-    fetch(`/store/product-specs/${data.id}`)
+    fetch(`/admin/product-specs/products/${data.id}`, {
+      credentials: "include",
+    })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()

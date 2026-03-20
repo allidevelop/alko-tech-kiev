@@ -61,6 +61,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/product-specs",
     },
     {
+      resolve: "./src/modules/resend-notification",
+    },
+    {
       resolve: "@medusajs/medusa/translation",
     },
     {

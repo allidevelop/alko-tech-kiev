@@ -27,7 +27,8 @@
     "@medusajs/framework": "2.13.1",
     "@medusajs/medusa": "2.13.1",
     "@variablevic/google-analytics-medusa": "^0.1.1",
-    "fast-xml-parser": "^5.5.3"
+    "fast-xml-parser": "^5.5.3",
+    "resend": "^6.9.4"
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.13.1",

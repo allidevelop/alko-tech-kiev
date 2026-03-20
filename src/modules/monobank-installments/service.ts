@@ -59,11 +59,16 @@ class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
     const { amount, context, data } = input
 
     const sessionId = (context as any)?.session_id || `ALKO-${Date.now()}`
+    // Try all possible sources for customer phone
     const customerPhone =
-      (context as any)?.customer?.phone ||
-      (context as any)?.customer?.billing_address?.phone ||
-      (context as any)?.billing_address?.phone ||
-      "+380994019521"
+      (data as any)?.phone ||                                    // from storefront data
+      (context as any)?.customer?.phone ||                       // logged-in customer
+      (context as any)?.customer?.billing_address?.phone ||      // billing address
+      (context as any)?.billing_address?.phone ||                // billing address direct
+      (context as any)?.account_holder?.phone ||                 // account holder
+      ""
+
+    console.log("[MonobankInstallments] initiatePayment phone:", customerPhone, "data.phone:", (data as any)?.phone, "context keys:", Object.keys(context || {}))
 
     // Medusa passes amount already in smallest currency unit (kopiyky).
     // item_subtotal from storefront is also in kopiyky.
@@ -94,7 +99,7 @@ class MonobankInstallmentsProviderService extends AbstractPaymentProvider<{}> {
     const sessionData = input.data as unknown as InstallmentSessionData
 
     const chargeAmount = sessionData.chargeAmount || 0
-    const customerPhone = sessionData.customerPhone || "+380994019521"
+    const customerPhone = sessionData.customerPhone || ""
     const sessionId = sessionData.sessionId || `ALKO-${Date.now()}`
 
     const products = [
