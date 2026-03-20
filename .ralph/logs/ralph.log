@@ -1,0 +1,13 @@
+[0;34m[2026-03-19 01:01:04] [INFO] Loaded configuration from .ralphrc[0m
+[0;32m[2026-03-19 01:01:04] [SUCCESS] 🚀 Ralph loop starting with Claude Code[0m
+[0;34m[2026-03-19 01:01:04] [INFO] Max calls per hour: 120[0m
+[0;34m[2026-03-19 01:01:04] [INFO] Logs: .ralph/logs/ | Docs: .ralph/docs/generated/ | Status: .ralph/status.json[0m
+[0;34m[2026-03-19 01:01:05] [INFO] Starting main loop...[0m
+[0;34m[2026-03-19 01:01:05] [INFO] Loop #1 - calling init_call_tracking...[0m
+[0;34m[2026-03-19 01:01:05] [INFO] Call counter reset for new hour: 2026031901[0m
+[0;35m[2026-03-19 01:01:05] [LOOP] === Starting Loop #1 ===[0m
+[0;35m[2026-03-19 01:01:05] [LOOP] Executing Claude Code (Call 1/120)[0m
+[0;34m[2026-03-19 01:01:05] [INFO] ⏳ Starting Claude Code execution... (timeout: 120m)[0m
+[0;34m[2026-03-19 01:01:05] [INFO] Starting new Claude session[0m
+[0;34m[2026-03-19 01:01:05] [INFO] Using modern CLI mode (json output)[0m
+[2026-03-19 01:01:05] [INFO] Using modern CLI mode (json output)

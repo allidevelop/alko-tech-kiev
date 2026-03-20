@@ -58,6 +58,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/checkbox",
     },
     {
+      resolve: "./src/modules/product-specs",
+    },
+    {
       resolve: "@medusajs/medusa/translation",
     },
     {

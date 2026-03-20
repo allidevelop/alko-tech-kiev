@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "disabled": true
+    },
+    "Sanity": {
+      "disabled": true
+    },
+    "medusa-admin": {
+      "disabled": true
+    },
+    "mcp-medusa": {
+      "disabled": true
+    }
+  }
+}
