@@ -20,10 +20,25 @@ cd /home/developer/projects/alko-store-storefront && npm run dev  # Port 8000
 ## Database
 PostgreSQL: `postgres://medusa_alko:medusa_alko_2026@localhost:5432/medusa_alko`
 
-## Admin
-- URL: http://localhost:9000/app
+## Production
+- Domain: https://alko-technics.kiev.ua
+- Admin: https://alko-technics.kiev.ua/app
+- Storefront: https://alko-technics.kiev.ua
+- Deploy: `bash deploy.sh all` (or `backend` / `storefront`)
+- IMPORTANT: Always reference production URLs, not localhost
+
+## Admin Credentials
 - Email: admin@alko-store.ua
 - Password: Admin123!
+
+## Notifications
+After completing each task/iteration, send a Telegram notification:
+```bash
+curl -s -X POST "https://api.telegram.org/bot8080753063:AAF3JMs_4xzaJvkmy_1gtO16N8ElU_wgaSc/sendMessage" \
+  -d chat_id=6552346228 \
+  -d parse_mode=Markdown \
+  -d text="MESSAGE_HERE"
+```
 
 ## Product Catalog
 - Source: `https://apipim.al-ko.ua/storage/xml_files/PriceList.xml`

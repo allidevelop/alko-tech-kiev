@@ -64,6 +64,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/resend-notification",
     },
     {
+      resolve: "./src/modules/import-manager",
+    },
+    {
       resolve: "@medusajs/medusa/translation",
     },
     {

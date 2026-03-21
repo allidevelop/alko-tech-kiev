@@ -1,4 +1,5 @@
 import { defineMiddlewares, authenticate } from "@medusajs/framework/http"
+import { rbacMiddleware } from "../lib/rbac/middleware"
 
 export default defineMiddlewares({
   routes: [
@@ -9,6 +10,11 @@ export default defineMiddlewares({
           allowUnregistered: true,
         }),
       ],
+    },
+    // RBAC — check user roles on all admin routes
+    {
+      matcher: "/admin/*",
+      middlewares: [rbacMiddleware],
     },
   ],
 })
