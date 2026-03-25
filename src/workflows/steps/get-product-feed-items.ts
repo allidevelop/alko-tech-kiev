@@ -22,6 +22,14 @@ type GetProductFeedItemsInput = {
   country_code: string
 }
 
+const STOREFRONT_URL = "https://alko-technics.kiev.ua"
+
+function toAbsoluteUrl(url: string): string {
+  if (!url) return ""
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  return `${STOREFRONT_URL}${url.startsWith("/") ? "" : "/"}${url}`
+}
+
 export const getProductFeedItemsStep = createStep(
   "get-product-feed-items",
   async (input: GetProductFeedItemsInput, { container }) => {
@@ -41,7 +49,6 @@ export const getProductFeedItemsStep = createStep(
         "variants.barcode",
         "variants.manage_inventory",
         "variants.allow_backorder",
-        "variants.inventory_quantity",
         "variants.prices.amount",
         "variants.prices.currency_code",
         "categories.name",
@@ -51,6 +58,39 @@ export const getProductFeedItemsStep = createStep(
         take: null,
       },
     } as any)
+
+    // Build inventory map: variant_id → available quantity
+    const inventoryMap = new Map<string, number>()
+    const { data: inventoryItems } = await query.graph({
+      entity: "inventory_item",
+      fields: [
+        "id",
+        "location_levels.stocked_quantity",
+        "location_levels.reserved_quantity",
+      ],
+      pagination: { take: null },
+    } as any)
+
+    // Map inventory_item_id → available qty
+    const itemQtyMap = new Map<string, number>()
+    for (const item of inventoryItems as any[]) {
+      let totalAvailable = 0
+      for (const level of item.location_levels || []) {
+        totalAvailable += (level.stocked_quantity || 0) - (level.reserved_quantity || 0)
+      }
+      itemQtyMap.set(item.id, totalAvailable)
+    }
+
+    // Map variant_id → inventory_item_id via link
+    const { data: variantLinks } = await query.graph({
+      entity: "product_variant_inventory_item",
+      fields: ["variant_id", "inventory_item_id"],
+      pagination: { take: null },
+    } as any)
+    for (const link of variantLinks as any[]) {
+      const qty = itemQtyMap.get(link.inventory_item_id) || 0
+      inventoryMap.set(link.variant_id, (inventoryMap.get(link.variant_id) || 0) + qty)
+    }
 
     const feedItems: FeedItem[] = []
 
@@ -76,13 +116,18 @@ export const getProductFeedItemsStep = createStep(
         // Format price as "15899 UAH"
         const priceFormatted = `${amount} ${input.currency_code.toUpperCase()}`
 
-        // Determine availability
+        // Determine availability from inventory module
         let availability: "in_stock" | "out_of_stock" = "in_stock"
         if (variant.manage_inventory) {
-          const qty = variant.inventory_quantity || 0
+          const qty = inventoryMap.get(variant.id) || 0
           if (qty <= 0 && !variant.allow_backorder) {
             availability = "out_of_stock"
           }
+        }
+
+        // Skip products without images (Google requires image_link)
+        if (!product.thumbnail) {
+          continue
         }
 
         const description = product.description
@@ -94,7 +139,7 @@ export const getProductFeedItemsStep = createStep(
           title: product.title || "",
           description,
           link: `https://alko-technics.kiev.ua/ua/products/${product.handle}`,
-          image_link: product.thumbnail || "",
+          image_link: toAbsoluteUrl(product.thumbnail || ""),
           price: priceFormatted,
           availability,
           condition: "new",
@@ -104,7 +149,7 @@ export const getProductFeedItemsStep = createStep(
 
         // Additional image
         if (product.images && product.images.length > 1) {
-          item.additional_image_link = product.images[1].url
+          item.additional_image_link = toAbsoluteUrl(product.images[1].url)
         }
 
         // GTIN from barcode

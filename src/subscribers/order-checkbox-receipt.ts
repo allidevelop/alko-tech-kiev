@@ -55,8 +55,9 @@ export default async function orderCheckboxReceiptHandler({
     // Determine payment provider
     let paymentProviderId = ""
     for (const pc of order.payment_collections || []) {
+      if (!pc) continue
       for (const p of pc.payments || []) {
-        if (p.provider_id) {
+        if (p?.provider_id) {
           paymentProviderId = p.provider_id
           break
         }
