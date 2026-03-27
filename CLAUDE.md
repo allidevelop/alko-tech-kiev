@@ -63,3 +63,100 @@ Medusa v2 modular architecture:
 - **Agent Skills**: `.ralph/docs/medusa-skills/` + `.ralph/docs/storefront-skills/` — official best practices
 - **Module docs**: `.ralph/docs/NOVA-POSHTA-MODULE.md`, `MONOBANK-PAYMENT-MODULE.md`, `LIQPAY-PAYMENT-MODULE.md`
 - **Payment Provider API**: `.ralph/docs/MEDUSA-PAYMENT-PROVIDER-REFERENCE.md`
+
+---
+
+## Operations (`ops/`)
+
+Автоматизация заказов, маркетплейс-фиды и Telegram-бот расположены в `ops/`:
+
+```
+ops/
+├── order-automation/         # B2B дилер, stock-check, NP TTN, Monobank оплата
+│   ├── .env                  # Credentials (Prom, NP, B2B, Gmail, Mono)
+│   ├── cron-automation.js    # Полный пайплайн обработки заказов
+│   ├── prom-monitor.js       # Мониторинг новых заказов Prom.ua (*/5 мин)
+│   ├── prom-api.js           # Prom.ua API
+│   ├── rozetka-api.js        # Rozetka API
+│   ├── nova-poshta.js        # Создание ТТН
+│   ├── stock-checker.js      # Проверка наличия (XML + Excel)
+│   ├── b2b-dealer.js         # Puppeteer: оформление в B2B кабинете AL-KO
+│   ├── np-tracker.js         # Трекинг посылок НП
+│   ├── monobank/             # KEP-логин, оплата счетов, сессия
+│   ├── dashboard.db          # SQLite: заказы и события
+│   ├── documents/            # PDF накладных НП
+│   └── logs/                 # Логи всех кронов
+├── telegram-bridge/          # Telegram <-> Claude Code мост
+│   └── bot.js                # @alko_technics_bot
+├── marketplace-feeds/        # XML фиды для маркетплейсов
+│   ├── rozetka-integration/  # PHP прокси (порт 8089)
+│   ├── prom-integration/     # PHP прокси (порт 8090)
+│   ├── alko-epicentr-project/ # Python конвертер
+│   ├── epicentr-api/         # Node.js утилиты Epicentr API
+│   └── update_feeds.sh       # Обновление всех фидов
+└── credentials/              # KEP .pfx, OAuth секреты
+```
+
+## Order Automation Pipeline
+
+Автоматическая обработка заказов Prom.ua / Rozetka:
+1. **Мониторинг** — prom-monitor.js каждые 5 мин проверяет новые заказы
+2. **Проверка наличия** — XML каталог + Excel остатки из Gmail
+3. **Создание ТТН** — Nova Poshta API (наложка / предоплата)
+4. **Скачивание документов** — express + zebra PDF
+5. **Сохранение декларации** — привязка ТТН к заказу на маркетплейсе
+6. **B2B кабинет** — Puppeteer оформляет заказ на b2b.al-ko.ua
+7. **Оплата счетов** — мониторинг Gmail, оплата через MonoBank KEP
+8. **Ответ поставщику** — reply Наташе с квитанцией + накладными
+
+### Команды order-automation
+```bash
+cd ops/order-automation
+node prom-monitor.js                      # Проверить новые заказы
+node cron-automation.js                   # Полный пайплайн
+node np-tracker.js                        # Трекинг НП
+node monobank/kep-login.js                # Обновить сессию MonoBank
+node monobank/process-invoices.js         # Обработать счета
+node stock-snapshot.js                    # Снапшот остатков
+```
+
+## Marketplace Feeds
+
+| Маркетплейс | Формат | Порт | Команда |
+|-------------|--------|------|---------|
+| Rozetka | PHP proxy | 8089 | `php ops/marketplace-feeds/rozetka-integration/rozetka-xml-proxy/index.php` |
+| Prom.ua | PHP proxy | 8090 | `php ops/marketplace-feeds/prom-integration/index.php` |
+| Epicentr | Python | — | `python3 ops/marketplace-feeds/alko-epicentr-project/scripts/alko_to_epicentr.py` |
+
+**XML источник:** `https://apipim.al-ko.ua/storage/xml_files/PriceList.xml`
+
+## Cron Jobs (`ops/order-automation/`)
+
+```
+*/5  * * * *  prom-monitor.js           # Мониторинг заказов Prom
+*/30 * * * *  monobank/process-invoices  # Оплата счетов
+0 */6 * * *   np-tracker.js             # Трекинг НП
+0 */6 * * *   monobank/kep-login.js     # Обновление сессии MonoBank
+0 9   * * *   stock-snapshot.js         # Снапшот остатков
+30 10 * * *   cron-automation.js        # Полный пайплайн
+```
+
+## Telegram Bot Commands
+
+- `/help` — все команды
+- `/status` — текущий статус
+- `/danger` — пропустить подтверждения
+- `/safe` — требовать подтверждения
+- `/new` — новая сессия
+- `/opus` — модель Opus
+- `/sonnet` — модель Sonnet
+
+## Key URLs
+
+| Ресурс | URL |
+|--------|-----|
+| AL-KO XML | https://apipim.al-ko.ua/storage/xml_files/PriceList.xml |
+| Rozetka Validator | https://seller.rozetka.com.ua/gomer/pricevalidate/check/index |
+| Epicentr API | https://api.epicentrm.com.ua/swagger/ |
+| B2B кабинет | https://b2b.al-ko.ua |
+| Dashboard | http://144.91.95.134:3999 |

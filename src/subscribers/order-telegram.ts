@@ -6,6 +6,7 @@ import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
  */
 
 const TELEGRAM_API = "https://api.telegram.org"
+const FREE_SHIPPING_THRESHOLD = 2000
 
 async function sendTelegramMessage(
   botToken: string,
@@ -34,15 +35,12 @@ async function sendTelegramMessage(
 
 function formatMoney(amount: any): string {
   if (amount == null) return "0"
-  // Medusa v2 query.graph returns BigNumber objects for monetary fields
-  // They can be: number, string, { value: string }, or BigNumber with numeric property
   let num: number
   if (typeof amount === "number") {
     num = amount
   } else if (typeof amount === "string") {
     num = parseFloat(amount)
   } else if (typeof amount === "object" && amount !== null) {
-    // BigNumber object — try .value, .numeric, or toString
     const raw = amount.value ?? amount.numeric ?? String(amount)
     num = parseFloat(String(raw))
   } else {
@@ -61,6 +59,28 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/"/g, "&quot;")
 }
 
+function getPaymentLabel(providerId: string): string {
+  const map: Record<string, string> = {
+    pp_system_default: "Системний (за замовчуванням)",
+    pp_cod_cod: "Накладений платіж (оплата при отриманні)",
+    pp_monobank_monobank: "Monobank (оплата картою)",
+    pp_liqpay_liqpay: "LiqPay (Visa/Mastercard)",
+    "pp_monobank-installments_monobank-installments": "Monobank (оплата частинами)",
+  }
+  return map[providerId] || providerId
+}
+
+function getMoneyNum(amount: any): number {
+  if (amount == null) return 0
+  if (typeof amount === "number") return amount
+  if (typeof amount === "string") return parseFloat(amount) || 0
+  if (typeof amount === "object" && amount !== null) {
+    const raw = amount.value ?? amount.numeric ?? String(amount)
+    return parseFloat(String(raw)) || 0
+  }
+  return 0
+}
+
 export default async function orderTelegramHandler({
   event: { data },
   container,
@@ -69,16 +89,9 @@ export default async function orderTelegramHandler({
   const botToken = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
 
-  if (!botToken) {
+  if (!botToken || !chatId) {
     logger.warn(
-      "TELEGRAM_BOT_TOKEN is not set — skipping Telegram notification"
-    )
-    return
-  }
-
-  if (!chatId) {
-    logger.warn(
-      "TELEGRAM_CHAT_ID is not set — skipping Telegram notification"
+      "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not set — skipping notification"
     )
     return
   }
@@ -120,42 +133,34 @@ export default async function orderTelegramHandler({
       return
     }
 
-    // Build the message
+    const currency = (order.currency_code || "UAH").toUpperCase()
+    const itemTotal = getMoneyNum(order.item_subtotal)
+    const isFreeShipping = itemTotal >= FREE_SHIPPING_THRESHOLD
+
+    // ── Build message ──
     const lines: string[] = []
 
-    lines.push(`<b>🛒 Нове замовлення #${order.display_id || order.id}</b>`)
+    // Header
+    lines.push(`🛒 <b>Замовлення #${order.display_id || order.id}</b>`)
     lines.push("")
 
-    // Customer info
-    lines.push("<b>👤 Клієнт:</b>")
+    // Customer
     const customerName = order.customer
-      ? escapeHtml(
-          [order.customer.first_name, order.customer.last_name]
-            .filter(Boolean)
-            .join(" ")
-        )
+      ? [order.customer.first_name, order.customer.last_name].filter(Boolean).join(" ")
       : null
     const shippingName = order.shipping_address
-      ? escapeHtml(
-          [order.shipping_address.first_name, order.shipping_address.last_name]
-            .filter(Boolean)
-            .join(" ")
-        )
+      ? [order.shipping_address.first_name, order.shipping_address.last_name].filter(Boolean).join(" ")
       : null
-    const displayName = customerName || shippingName || "—"
-    lines.push(`Ім'я: ${displayName}`)
-    if (order.email) {
-      lines.push(`Email: ${escapeHtml(order.email)}`)
-    }
-    if (order.shipping_address?.phone) {
-      lines.push(`Тел: ${escapeHtml(order.shipping_address.phone)}`)
-    } else if (order.customer?.phone) {
-      lines.push(`Тел: ${escapeHtml(order.customer.phone)}`)
-    }
+    const displayName = escapeHtml(customerName || shippingName || "—")
+    const phone = order.shipping_address?.phone || order.customer?.phone || ""
+
+    lines.push(`👤 <b>${displayName}</b>`)
+    if (phone) lines.push(`📱 ${escapeHtml(phone)}`)
+    if (order.email) lines.push(`✉️ ${escapeHtml(order.email)}`)
     lines.push("")
 
-    // Order items
-    lines.push("<b>📦 Товари:</b>")
+    // Items
+    lines.push("📦 <b>Товари:</b>")
     if (order.items && order.items.length > 0) {
       for (const item of order.items) {
         if (!item) continue
@@ -164,88 +169,74 @@ export default async function orderTelegramHandler({
           ? ` (${escapeHtml(item.variant_title)})`
           : ""
         const qty = item.quantity || 1
-        const price = formatMoney(item.unit_price)
-        const curr = (
-          order.currency_code || "UAH"
-        ).toUpperCase()
+        const lineTotal = getMoneyNum(item.unit_price) * qty
         lines.push(
-          `  • ${title}${variantTitle} × ${qty} — ${price} ${curr}`
+          `  ${title}${variantTitle}`)
+        lines.push(
+          `  ${qty} шт × ${formatMoney(item.unit_price)} = <b>${formatMoney(lineTotal)} ${currency}</b>`
         )
       }
-    } else {
-      lines.push("  (немає даних)")
     }
     lines.push("")
 
-    // Totals — customer pays only for items; shipping is paid separately at Nova Poshta
-    const currency = (order.currency_code || "UAH").toUpperCase()
-    lines.push("<b>💰 Підсумок:</b>")
-    lines.push(
-      `<b>До сплати (товари): ${formatMoney(order.item_subtotal)} ${currency}</b>`
-    )
-    if (order.discount_total) {
+    // Totals
+    lines.push("💰 <b>Підсумок:</b>")
+    lines.push(`Товари: ${formatMoney(order.item_subtotal)} ${currency}`)
+
+    if (order.discount_total && getMoneyNum(order.discount_total) > 0) {
       lines.push(`Знижка: -${formatMoney(order.discount_total)} ${currency}`)
     }
-    if (order.shipping_subtotal || order.shipping_total) {
-      lines.push(`Доставка (орієнтовна, оплачується окремо): ~${formatMoney(order.shipping_subtotal || order.shipping_total)} ${currency}`)
+
+    if (isFreeShipping) {
+      lines.push(`🎁 Доставка: <b>БЕЗКОШТОВНО</b> (замовлення від ${formatMoney(FREE_SHIPPING_THRESHOLD)} ${currency})`)
+    } else {
+      lines.push(`Доставка: за тарифами НП (оплачується окремо)`)
     }
+
+    const total = getMoneyNum(order.total) || itemTotal
+    lines.push(`<b>💵 До сплати: ${formatMoney(total)} ${currency}</b>`)
     lines.push("")
 
-    // Shipping address
+    // Shipping
     if (order.shipping_address) {
       const addr = order.shipping_address
-      lines.push("<b>🚚 Адреса доставки:</b>")
-      const addrParts = [
-        addr.address_1,
-        addr.address_2,
-        addr.city,
-        addr.province,
-        addr.postal_code,
-        addr.country_code?.toUpperCase(),
-      ]
+      lines.push("🚚 <b>Доставка:</b>")
+
+      // Shipping method name
+      if (order.shipping_methods && order.shipping_methods.length > 0) {
+        for (const sm of order.shipping_methods) {
+          if (sm?.name) lines.push(escapeHtml(sm.name))
+        }
+      }
+
+      const addrParts = [addr.address_1, addr.address_2, addr.city, addr.province]
         .filter(Boolean)
         .map(escapeHtml)
       if (addrParts.length > 0) {
         lines.push(addrParts.join(", "))
       }
-      if (addr.company) {
-        lines.push(`Компанія: ${escapeHtml(addr.company)}`)
-      }
       lines.push("")
     }
 
-    // Payment method
-    if (
-      order.payment_collections &&
-      order.payment_collections.length > 0
-    ) {
-      lines.push("<b>💳 Оплата:</b>")
+    // Payment
+    if (order.payment_collections && order.payment_collections.length > 0) {
+      lines.push("💳 <b>Оплата:</b>")
       for (const pc of order.payment_collections) {
         if (!pc) continue
         if (pc.payments && pc.payments.length > 0) {
           for (const payment of pc.payments) {
             if (!payment) continue
-            const provider = escapeHtml(
-              payment.provider_id || "невідомий"
-            )
-            lines.push(`Провайдер: ${provider}`)
+            lines.push(getPaymentLabel(payment.provider_id || ""))
           }
-        } else {
-          const status = escapeHtml(pc.status || "невідомо")
-          lines.push(`Статус: ${status}`)
         }
       }
       lines.push("")
     }
 
-    // Shipping method
-    if (order.shipping_methods && order.shipping_methods.length > 0) {
-      lines.push("<b>📮 Спосіб доставки:</b>")
-      for (const sm of order.shipping_methods) {
-        if (!sm) continue
-        lines.push(escapeHtml(sm.name || sm.shipping_option_id || "—"))
-      }
-      lines.push("")
+    // Metadata (quick order source, etc.)
+    const metadata = order.metadata as Record<string, any> | null
+    if (metadata?.source === "quick-order") {
+      lines.push("⚡ <i>Швидке замовлення</i>")
     }
 
     const message = lines.join("\n")
@@ -253,7 +244,7 @@ export default async function orderTelegramHandler({
     await sendTelegramMessage(botToken, chatId, message)
 
     logger.info(
-      `Telegram notification sent for order ${order.display_id || order.id}`
+      `Telegram notification sent for order #${order.display_id || order.id}`
     )
   } catch (error) {
     logger.error(

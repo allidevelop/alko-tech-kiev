@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AL-KO Technics — Рекламні кампанії Meta Ads</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1114; color: #e4e4e7; line-height: 1.6; }
+
+  .header { background: linear-gradient(135deg, #1a5c2e 0%, #0d3318 100%); padding: 32px 0; border-bottom: 1px solid #2d5a3f; }
+  .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .header h1 { font-size: 24px; font-weight: 700; color: #fff; }
+  .header h1 span { color: #4ade80; }
+  .header-meta { display: flex; gap: 20px; flex-wrap: wrap; }
+  .header-meta .tag { background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #a7f3d0; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+  .stat-card { background: #1a1d23; border: 1px solid #2a2d35; border-radius: 12px; padding: 20px; }
+  .stat-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #71717a; margin-bottom: 4px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-card .value.green { color: #4ade80; }
+  .stat-card .value.blue { color: #60a5fa; }
+  .stat-card .value.amber { color: #fbbf24; }
+  .stat-card .value.red { color: #f87171; }
+
+  .section { margin-bottom: 40px; }
+  .section-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .section-title .icon { font-size: 24px; }
+
+  .campaign-card { background: #1a1d23; border: 1px solid #2a2d35; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+  .campaign-header { padding: 20px 24px; border-bottom: 1px solid #2a2d35; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .campaign-header h3 { font-size: 18px; font-weight: 600; color: #fff; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge.paused { background: #422006; color: #fbbf24; }
+  .badge.active { background: #052e16; color: #4ade80; }
+  .badge.traffic { background: #172554; color: #60a5fa; }
+
+  .campaign-body { padding: 24px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .detail-block { background: #12141a; border: 1px solid #23262e; border-radius: 10px; padding: 16px; }
+  .detail-block h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #71717a; margin-bottom: 12px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e2028; font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .key { color: #a1a1aa; }
+  .detail-row .val { color: #e4e4e7; font-weight: 500; }
+  .detail-row .val.highlight { color: #4ade80; }
+
+  .creative-preview { background: #12141a; border: 1px solid #23262e; border-radius: 10px; padding: 20px; }
+  .creative-preview .fb-post { background: #fff; color: #1c1e21; border-radius: 8px; overflow: hidden; max-width: 500px; }
+  .fb-post-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  .fb-post-header .avatar { width: 40px; height: 40px; border-radius: 50%; background: #1a5c2e; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+  .fb-post-header .name { font-weight: 600; font-size: 14px; }
+  .fb-post-header .sub { font-size: 12px; color: #65676b; }
+  .fb-post-body { padding: 0 16px 12px; font-size: 14px; line-height: 1.5; white-space: pre-line; }
+  .fb-post-link { background: #f0f2f5; padding: 12px 16px; border-top: 1px solid #e4e6eb; }
+  .fb-post-link .url { font-size: 12px; color: #65676b; text-transform: uppercase; }
+  .fb-post-link .title { font-size: 15px; font-weight: 600; color: #1c1e21; margin: 2px 0; }
+  .fb-post-link .desc { font-size: 13px; color: #65676b; }
+  .fb-post-cta { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; }
+  .fb-post-cta .btn { background: #e4e6eb; color: #050505; font-weight: 600; font-size: 14px; padding: 8px 16px; border-radius: 6px; border: none; }
+
+  .targeting-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .targeting-tag { background: #172554; color: #93c5fd; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+  .targeting-tag.geo { background: #052e16; color: #86efac; }
+  .targeting-tag.age { background: #422006; color: #fed7aa; }
+
+  .pixel-info { background: linear-gradient(135deg, #1e1b4b 0%, #172554 100%); border: 1px solid #312e81; border-radius: 10px; padding: 16px; margin-top: 16px; }
+  .pixel-info .title { font-size: 13px; color: #a5b4fc; font-weight: 600; margin-bottom: 8px; }
+  .pixel-info code { background: #0f0e1a; padding: 4px 8px; border-radius: 4px; font-size: 13px; color: #c4b5fd; }
+
+  .id-copy { font-family: monospace; font-size: 12px; color: #71717a; cursor: pointer; }
+  .id-copy:hover { color: #a1a1aa; }
+
+  .footer { text-align: center; padding: 32px; color: #52525b; font-size: 13px; }
+
+  @media (max-width: 640px) {
+    .header h1 { font-size: 18px; }
+    .stat-card .value { font-size: 22px; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .fb-post { max-width: 100% !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>🌿 <span>AL-KO Technics</span> — Meta Ads Dashboard</h1>
+    <div class="header-meta">
+      <span class="tag">📊 Ad Account: act_2159083171163017</span>
+      <span class="tag">📄 Page: AL-KO Technics</span>
+      <span class="tag">📅 23.03.2026</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Summary Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">Кампании</div>
+      <div class="value green">2</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Группы объявлений</div>
+      <div class="value blue">2</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Объявления</div>
+      <div class="value amber">2</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Общий бюджет / день</div>
+      <div class="value">$15.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Статус</div>
+      <div class="value amber">PAUSED</div>
+    </div>
+  </div>
+
+  <!-- Campaign 1: Lawn Mowers -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🌱</span> Кампания 1: Газонокосарки AL-KO — Весна 2026</div>
+
+    <div class="campaign-card">
+      <div class="campaign-header">
+        <h3>🌱 Газонокосарки AL-KO — Весна 2026</h3>
+        <div>
+          <span class="badge paused">⏸ PAUSED</span>
+          <span class="badge traffic">🔗 TRAFFIC</span>
+        </div>
+      </div>
+      <div class="campaign-body">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Параметры кампании</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val id-copy">120241518938330366</span></div>
+            <div class="detail-row"><span class="key">Цель</span><span class="val">OUTCOME_TRAFFIC</span></div>
+            <div class="detail-row"><span class="key">Бюджет / день</span><span class="val highlight">$10.00</span></div>
+            <div class="detail-row"><span class="key">Стратегия ставок</span><span class="val">Lowest Cost (без ограничения)</span></div>
+            <div class="detail-row"><span class="key">Статус</span><span class="val">PAUSED</span></div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Группа объявлений: UA 28-60</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val id-copy">120241518948110366</span></div>
+            <div class="detail-row"><span class="key">Оптимизация</span><span class="val">LINK_CLICKS</span></div>
+            <div class="detail-row"><span class="key">Оплата за</span><span class="val">IMPRESSIONS</span></div>
+            <div class="detail-row"><span class="key">Advantage Audience</span><span class="val">Выключено (ручной)</span></div>
+
+            <h4 style="margin-top:16px">Таргетинг</h4>
+            <div class="targeting-tags">
+              <span class="targeting-tag geo">🇺🇦 Україна</span>
+              <span class="targeting-tag age">👤 28-60 років</span>
+              <span class="targeting-tag">🌿 Lawn mower</span>
+              <span class="targeting-tag">🌱 Gardening</span>
+              <span class="targeting-tag">🔧 Garden tool</span>
+              <span class="targeting-tag">🏠 Home improvement</span>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Объявление: Газонокосарки — Link Ad</h4>
+            <div class="detail-row"><span class="key">ID объявления</span><span class="val id-copy">120241518948800366</span></div>
+            <div class="detail-row"><span class="key">ID креатива</span><span class="val id-copy">1636038177639662</span></div>
+            <div class="detail-row"><span class="key">Ссылка</span><span class="val"><a href="https://alko-technics.kiev.ua/uk/categories/hazonokosarky" style="color:#60a5fa">hazonokosarky</a></span></div>
+            <div class="detail-row"><span class="key">CTA</span><span class="val">Дізнатись більше</span></div>
+
+            <div class="pixel-info">
+              <div class="title">🔹 Meta Pixel подключён</div>
+              <code>ID: 1438859913890738</code>
+              <div style="margin-top:6px;font-size:12px;color:#818cf8">Трекинг: offsite_conversion</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creative Preview -->
+        <div class="creative-preview" style="margin-top:20px">
+          <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#71717a;margin-bottom:16px">Превью креативу</h4>
+          <div class="fb-post">
+            <div class="fb-post-header">
+              <div class="avatar">AK</div>
+              <div>
+                <div class="name">AL-KO Technics</div>
+                <div class="sub">Sponsored · 🌍</div>
+              </div>
+            </div>
+            <div class="fb-post-body">🌿 Весна — час подбати про газон!
+
+Газонокосарки AL-KO від офіційного дилера в Україні:
+✅ Акумуляторні, бензинові та електричні
+✅ Від 2 999 до 32 000 грн
+✅ Безкоштовна доставка від 3 000 грн
+✅ Офіційна гарантія від виробника
+
+Німецька якість з 90-річною історією. Оберіть свою газонокосарку на alko-technics.kiev.ua</div>
+            <div class="fb-post-link">
+              <div class="url">alko-technics.kiev.ua</div>
+              <div class="title">Газонокосарки AL-KO — від 2 999 грн</div>
+              <div class="desc">Акумуляторні, бензинові, електричні. Офіційний дилер. Доставка по Україні.</div>
+            </div>
+            <div class="fb-post-cta">
+              <div></div>
+              <button class="btn">Дізнатись більше</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign 2: Test Campaign -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🧪</span> Кампания 2: Test Traffic Campaign — AL-KO (тестова)</div>
+
+    <div class="campaign-card">
+      <div class="campaign-header">
+        <h3>🧪 Test Traffic Campaign — AL-KO</h3>
+        <div>
+          <span class="badge paused">⏸ PAUSED</span>
+          <span class="badge traffic">🔗 TRAFFIC</span>
+        </div>
+      </div>
+      <div class="campaign-body">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Параметры кампании</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val id-copy">120241518381280366</span></div>
+            <div class="detail-row"><span class="key">Цель</span><span class="val">OUTCOME_TRAFFIC</span></div>
+            <div class="detail-row"><span class="key">Бюджет / день</span><span class="val highlight">$5.00</span></div>
+            <div class="detail-row"><span class="key">Стратегия ставок</span><span class="val">Lowest Cost (без ограничения)</span></div>
+            <div class="detail-row"><span class="key">Статус</span><span class="val">PAUSED</span></div>
+            <div style="margin-top:12px;padding:8px;background:#422006;border-radius:6px;font-size:12px;color:#fbbf24">⚠ Тестова кампанія — можна видалити</div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Группа объявлений: AL-KO Ukraine — Traffic</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val id-copy">120241518388070366</span></div>
+            <div class="detail-row"><span class="key">Оптимизация</span><span class="val">LINK_CLICKS</span></div>
+            <div class="detail-row"><span class="key">Оплата за</span><span class="val">IMPRESSIONS</span></div>
+
+            <h4 style="margin-top:16px">Таргетинг</h4>
+            <div class="targeting-tags">
+              <span class="targeting-tag geo">🇺🇦 Україна</span>
+              <span class="targeting-tag age">👤 25-65 років</span>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#a1a1aa">Без інтересів — широка аудиторія</div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Объявление: AL-KO Test Ad</h4>
+            <div class="detail-row"><span class="key">ID объявления</span><span class="val id-copy">120241518394430366</span></div>
+            <div class="detail-row"><span class="key">ID креатива</span><span class="val id-copy">949804191108347</span></div>
+            <div class="detail-row"><span class="key">Ссылка</span><span class="val"><a href="https://alko-technics.kiev.ua" style="color:#60a5fa">alko-technics.kiev.ua</a></span></div>
+            <div class="detail-row"><span class="key">CTA</span><span class="val">Shop Now</span></div>
+
+            <div class="pixel-info">
+              <div class="title">🔹 Meta Pixel подключён</div>
+              <code>ID: 1438859913890738</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="creative-preview" style="margin-top:20px">
+          <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#71717a;margin-bottom:16px">Превью креативу</h4>
+          <div class="fb-post">
+            <div class="fb-post-header">
+              <div class="avatar">AK</div>
+              <div>
+                <div class="name">AL-KO Technics</div>
+                <div class="sub">Sponsored · 🌍</div>
+              </div>
+            </div>
+            <div class="fb-post-body">Садова техніка AL-KO — офіційний дилер в Україні. Газонокосарки, тримери, мийки високого тиску та інша техніка для саду. Безкоштовна доставка від 3000 грн!</div>
+            <div class="fb-post-link">
+              <div class="url">alko-technics.kiev.ua</div>
+              <div class="title">AL-KO Technics — Садова техніка</div>
+              <div class="desc">Німецька якість. Офіційна гарантія. Доставка по Україні.</div>
+            </div>
+            <div class="fb-post-cta">
+              <div></div>
+              <button class="btn">Shop Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pixel & Infrastructure -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚙️</span> Інфраструктура</div>
+    <div class="campaign-card">
+      <div class="campaign-body">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Рекламний аккаунт</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val">act_2159083171163017</span></div>
+            <div class="detail-row"><span class="key">Назва</span><span class="val">wisecat</span></div>
+            <div class="detail-row"><span class="key">Валюта</span><span class="val">USD</span></div>
+            <div class="detail-row"><span class="key">Таймзона</span><span class="val">Europe/Kiev</span></div>
+            <div class="detail-row"><span class="key">Статус</span><span class="val highlight">Активний</span></div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Facebook Page</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val">980641355140314</span></div>
+            <div class="detail-row"><span class="key">Назва</span><span class="val">AL-KO Technics</span></div>
+            <div class="detail-row"><span class="key">Контроль</span><span class="val highlight">Full Control</span></div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Meta Pixel</h4>
+            <div class="detail-row"><span class="key">ID</span><span class="val">1438859913890738</span></div>
+            <div class="detail-row"><span class="key">Встановлено на сайті</span><span class="val highlight">✅ Так</span></div>
+            <div class="detail-row"><span class="key">Стратегія</span><span class="val">afterInteractive</span></div>
+            <div class="detail-row"><span class="key">Події</span><span class="val">PageView (всі сторінки)</span></div>
+          </div>
+
+          <div class="detail-block">
+            <h4>Meta App</h4>
+            <div class="detail-row"><span class="key">App ID</span><span class="val">1345256443949954</span></div>
+            <div class="detail-row"><span class="key">MCP сервер</span><span class="val highlight">✅ Підключено</span></div>
+            <div class="detail-row"><span class="key">Розташування</span><span class="val">/tmp/meta-ads-mcp/</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Steps -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📋</span> Наступні кроки</div>
+    <div class="campaign-card">
+      <div class="campaign-body" style="padding:24px">
+        <div style="display:grid;gap:12px">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#12141a;border-radius:8px;border:1px solid #23262e">
+            <span style="font-size:20px">1️⃣</span>
+            <div>
+              <div style="font-weight:600;color:#fff;margin-bottom:2px">Акумуляторна техніка AL-KO</div>
+              <div style="font-size:13px;color:#a1a1aa">Кампанія на тренд EnergyFlex. Бюджет $7/день. Аудиторія: 25-55, DIY + інструменти.</div>
+            </div>
+            <span class="badge paused" style="flex-shrink:0">Очікує</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#12141a;border-radius:8px;border:1px solid #23262e">
+            <span style="font-size:20px">2️⃣</span>
+            <div>
+              <div style="font-weight:600;color:#fff;margin-bottom:2px">Ретаргетинг</div>
+              <div style="font-size:13px;color:#a1a1aa">Custom Audience з пікселю (відвідувачі за 14 днів). Бюджет $3/день. Потрібен новий токен з дозволом pages_manage_ads.</div>
+            </div>
+            <span class="badge paused" style="flex-shrink:0">Очікує</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#12141a;border-radius:8px;border:1px solid #23262e">
+            <span style="font-size:20px">3️⃣</span>
+            <div>
+              <div style="font-weight:600;color:#fff;margin-bottom:2px">Додати зображення до креативів</div>
+              <div style="font-size:13px;color:#a1a1aa">Завантажити фото газонокосарок AL-KO для карусельної реклами. Потрібен новий токен.</div>
+            </div>
+            <span class="badge paused" style="flex-shrink:0">Очікує</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#12141a;border-radius:8px;border:1px solid #23262e">
+            <span style="font-size:20px">4️⃣</span>
+            <div>
+              <div style="font-weight:600;color:#fff;margin-bottom:2px">Активувати кампанії</div>
+              <div style="font-size:13px;color:#a1a1aa">Перевести кампанію «Газонокосарки» зі статусу PAUSED → ACTIVE. За командою.</div>
+            </div>
+            <span class="badge paused" style="flex-shrink:0">За командою</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#12141a;border-radius:8px;border:1px solid #23262e">
+            <span style="font-size:20px">5️⃣</span>
+            <div>
+              <div style="font-weight:600;color:#fff;margin-bottom:2px">Видалити тестову кампанію</div>
+              <div style="font-size:13px;color:#a1a1aa">Test Traffic Campaign — AL-KO. Створена для перевірки зв'язки API.</div>
+            </div>
+            <span class="badge paused" style="flex-shrink:0">За командою</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  AL-KO Technics Meta Ads Dashboard · Згенеровано Claude Code · 23.03.2026
+</div>
+
+</body>
+</html>

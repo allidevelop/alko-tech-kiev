@@ -39,3 +39,21 @@ data/
 
 # Misc
 *.png
+
+# Operations tooling (ops/)
+ops/order-automation/node_modules/
+ops/order-automation/dashboard-app/node_modules/
+ops/order-automation/dashboard-app/.next/
+ops/order-automation/dashboard.db
+ops/order-automation/screenshots/
+ops/order-automation/logs/
+ops/order-automation/cache/
+ops/order-automation/documents/
+ops/order-automation/monobank/mono-session.json
+ops/order-automation/monobank/processed-invoices.json
+ops/credentials/
+ops/telegram-bridge/bot.log
+ops/telegram-bridge/received_images/
+ops/telegram-bridge/received_voice/
+ops/marketplace-feeds/*/cache/
+ops/marketplace-feeds/*/logs/

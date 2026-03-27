@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Розробка інтернет-магазину під ключ — Україна</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; color: #1a1a2e; line-height: 1.7; background: #fff; }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 40%, #2d1b69 100%);
+    color: #fff;
+    padding: 80px 24px 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-2%, 2%); }
+  }
+  .hero-content { position: relative; max-width: 800px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 6px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-bottom: 32px;
+    color: #c4b5fd;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin: 0 auto 40px;
+    line-height: 1.8;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    padding: 16px 36px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.3);
+  }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4); }
+
+  /* ===== SECTIONS ===== */
+  .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+  section { padding: 80px 0; }
+  section:nth-child(even) { background: #f8f9fc; }
+
+  .section-header { text-align: center; margin-bottom: 56px; }
+  .section-header h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .section-header p { font-size: 17px; color: #64748b; max-width: 640px; margin: 0 auto; }
+
+  /* ===== PROBLEMS ===== */
+  .problems-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .problem-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .problem-card:hover { border-color: #c084fc; }
+  .problem-icon { font-size: 28px; margin-bottom: 12px; }
+  .problem-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .problem-card p { font-size: 14px; color: #64748b; }
+
+  /* ===== FEATURES ===== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .feature {
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #f1f5f9;
+    transition: box-shadow 0.2s;
+  }
+  .feature:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .feature-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .fi-green { background: #ecfdf5; }
+  .fi-blue { background: #eff6ff; }
+  .fi-purple { background: #f5f3ff; }
+  .fi-amber { background: #fffbeb; }
+  .fi-pink { background: #fdf2f8; }
+  .fi-cyan { background: #ecfeff; }
+  .feature h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .feature p { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+  /* ===== VS MARKETPLACES ===== */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  }
+  .comparison-table thead th {
+    background: #1e1b4b;
+    color: #fff;
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .comparison-table thead th:first-child { border-radius: 16px 0 0 0; }
+  .comparison-table thead th:last-child { border-radius: 0 16px 0 0; }
+  .comparison-table tbody td {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+  .comparison-table tbody tr:last-child td { border-bottom: none; }
+  .comparison-table tbody tr:hover { background: #f8f9fc; }
+  .comparison-table .yes { color: #16a34a; font-weight: 600; }
+  .comparison-table .no { color: #dc2626; }
+  .comparison-table .partial { color: #d97706; }
+  .comparison-table .our-col { background: #f0fdf4; }
+  .comparison-table thead .our-col { background: #16a34a; }
+
+  /* ===== PRICING ===== */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+  .pricing-card {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 36px 28px;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pricing-card:hover { border-color: #a78bfa; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+  .pricing-card.featured {
+    border-color: #8b5cf6;
+    box-shadow: 0 8px 40px rgba(139, 92, 246, 0.15);
+  }
+  .pricing-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+    padding: 5px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .pricing-name { font-size: 13px; font-weight: 600; color: #8b5cf6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .pricing-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .pricing-price { font-size: 40px; font-weight: 800; margin-bottom: 4px; }
+  .pricing-price span { font-size: 16px; font-weight: 400; color: #94a3b8; }
+  .pricing-period { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+  .pricing-features { list-style: none; margin-bottom: 28px; }
+  .pricing-features li {
+    padding: 8px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid #f8f9fc;
+  }
+  .pricing-features li:last-child { border-bottom: none; }
+  .pricing-features .check { color: #16a34a; font-weight: 700; flex-shrink: 0; }
+  .pricing-features .cross { color: #cbd5e1; flex-shrink: 0; }
+  .pricing-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 2px solid #e2e8f0;
+    color: #1e1b4b;
+    background: #fff;
+  }
+  .pricing-btn:hover { border-color: #8b5cf6; color: #8b5cf6; }
+  .pricing-btn.primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  }
+  .pricing-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4); }
+
+  /* ===== PROCESS ===== */
+  .process-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    counter-reset: step;
+  }
+  .step {
+    text-align: center;
+    padding: 28px 20px;
+    counter-increment: step;
+    position: relative;
+  }
+  .step::before {
+    content: counter(step);
+    display: block;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 48px;
+    margin: 0 auto 16px;
+  }
+  .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .step p { font-size: 13px; color: #64748b; }
+
+  /* ===== PORTFOLIO ===== */
+  .portfolio-item {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+  }
+  .portfolio-img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #94a3b8;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .portfolio-img img { width: 100%; height: 100%; object-fit: cover; }
+  .portfolio-info { padding: 24px; }
+  .portfolio-info h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .portfolio-info p { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+  .portfolio-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .portfolio-tag { background: #f5f3ff; color: #7c3aed; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+
+  /* ===== GUARANTEES ===== */
+  .guarantees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .guarantee {
+    text-align: center;
+    padding: 32px 20px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+  }
+  .guarantee-icon { font-size: 36px; margin-bottom: 12px; }
+  .guarantee h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .guarantee p { font-size: 13px; color: #64748b; }
+
+  /* ===== CTA ===== */
+  .cta-section {
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    color: #fff;
+    padding: 80px 24px;
+    text-align: center;
+  }
+  .cta-section h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; margin-bottom: 16px; }
+  .cta-section p { font-size: 17px; color: rgba(255,255,255,0.7); max-width: 500px; margin: 0 auto 32px; }
+  .cta-contacts {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .cta-contact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 14px 24px;
+    border-radius: 12px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .cta-contact:hover { background: rgba(255,255,255,0.15); }
+
+  /* ===== FOOTER ===== */
+  .footer { text-align: center; padding: 32px; font-size: 13px; color: #94a3b8; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .hero { padding: 60px 20px 80px; }
+    section { padding: 56px 0; }
+    .comparison-table { font-size: 12px; }
+    .comparison-table thead th, .comparison-table tbody td { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Розробка інтернет-магазинів в Україні</div>
+    <h1>Ваш власний <span>інтернет-магазин</span><br>за 7-21 день</h1>
+    <p>Кастомне рішення, яке повністю належить вам. Без щомісячних платежів за платформу, без обмежень маркетплейсів, без залежності від розробника.</p>
+    <a href="#pricing" class="hero-cta">Обрати пакет</a>
+  </div>
+</div>
+
+<!-- ПРОБЛЕМИ -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2>Знайомі ситуації?</h2>
+      <p>Більшість підприємців стикаються з цими проблемами, коли починають продавати онлайн</p>
+    </div>
+    <div class="problems-grid">
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>Маркетплейси забирають 15-30% з кожного продажу</h3>
+        <p>Prom.ua, Rozetka, OLX — комісії з'їдають прибуток. При обороті 100 000 грн/міс ви втрачаєте до 30 000 грн.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🔒</div>
+        <h3>Ви не контролюєте свій бізнес</h3>
+        <p>Маркетплейс може змінити правила, заблокувати аккаунт або підняти комісію. Ваша база клієнтів — у них, не у вас.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🐢</div>
+        <h3>Шаблонні рішення обмежують ріст</h3>
+        <p>Shopify, Tilda, Хорошоп — ви платите щомісяця і не можете вийти за рамки шаблону. Ваш магазин виглядає як тисячі інших.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🤷</div>
+        <h3>Залежність від розробника</h3>
+        <p>Класичні CMS (OpenCart, WordPress) — щоразу потрібен програміст для будь-якої зміни. Повільний сайт, застарілий дизайн.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📱</div>
+        <h3>Мобільна версія — як додаток</h3>
+        <p>80% покупців заходять з телефону. Якщо мобільна версія незручна — ви втрачаєте 4 з 5 потенційних клієнтів.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📊</div>
+        <h3>Ніякої аналітики та автоматизації</h3>
+        <p>Ви не знаєте, хто ваші клієнти, звідки вони приходять, що переглядають і чому не купують.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ЩО МИ СТВОРЮЄМО -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2>Що ви отримуєте</h2>
+      <p>Повноцінний інтернет-магазин з усіма інтеграціями, які потрібні для українського ринку</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature">
+        <div class="feature-icon fi-green">🛒</div>
+        <div>
+          <h3>Каталог товарів без обмежень</h3>
+          <p>Необмежена кількість товарів, категорій, варіантів. Фільтри, сортування, пошук. Характеристики, фото, відео для кожного товару.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-blue">📦</div>
+        <div>
+          <h3>Нова Пошта — автоматично</h3>
+          <p>Пошук міст і відділень, автозаповнення при оформленні. Клієнт обирає зручне відділення за 2 кліки.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-purple">💳</div>
+        <div>
+          <h3>Зручна оплата</h3>
+          <p>Monobank, LiqPay, накладений платіж, оплата карткою. Покупка частинами (розстрочка) через Monobank.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-amber">📱</div>
+        <div>
+          <h3>Ідеальна мобільна версія</h3>
+          <p>Mobile-first дизайн. Сайт виглядає і працює як додаток на телефоні. Швидке завантаження навіть на 3G.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-pink">🔍</div>
+        <div>
+          <h3>SEO від першого дня</h3>
+          <p>ЧПУ-посилання, мета-теги, Schema.org, sitemap.xml, Open Graph. Ваш сайт готовий до індексації Google з моменту запуску.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-cyan">🌐</div>
+        <div>
+          <h3>Мультимовність</h3>
+          <p>Українська, англійська, польська — будь-яка мова. Перемикач в один клік. Переклад всіх товарів і категорій через адмін-панель.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-green">📊</div>
+        <div>
+          <h3>Аналітика та реклама</h3>
+          <p>Google Analytics 4, Facebook Pixel, Google Ads — встановлені та налаштовані. Відстежуйте кожну покупку, кожен клік.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-blue">📧</div>
+        <div>
+          <h3>Сповіщення</h3>
+          <p>Email-підтвердження замовлень, Telegram-повідомлення менеджеру, SMS (опціонально). Ви дізнаєтесь про замовлення миттєво.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-purple">🏷️</div>
+        <div>
+          <h3>Промокоди та знижки</h3>
+          <p>Відсоткові та фіксовані знижки, промокоди, таймери акцій. Гнучка система ціноутворення.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-amber">📋</div>
+        <div>
+          <h3>Імпорт товарів</h3>
+          <p>Автоматичний імпорт з XML, CSV, Excel. Підтримка форматів Prom.ua, Rozetka, Google Merchant. Оновлення цін і залишків за розкладом.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-pink">🛍️</div>
+        <div>
+          <h3>Товарні фіди для маркетплейсів</h3>
+          <p>Автоматичне формування фідів для Prom.ua, Rozetka, Google Shopping, Facebook Catalog. Ваш магазин — єдине джерело даних.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon fi-cyan">⚡</div>
+        <div>
+          <h3>Швидкість та продуктивність</h3>
+          <p>Час завантаження < 2 секунди. Google PageSpeed 90+. Сучасний стек: серверний рендеринг, кешування, CDN.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ПОРІВНЯННЯ -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2>Порівняння з іншими рішеннями</h2>
+      <p>Чому власний магазин — це інвестиція, а не витрати</p>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Критерій</th>
+            <th>Маркетплейси<br>(Prom, Rozetka)</th>
+            <th>Конструктори<br>(Shopify, Tilda)</th>
+            <th class="our-col">Наше рішення</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Щомісячна плата</strong></td>
+            <td>Від 500 грн/міс + комісія 5-30%</td>
+            <td>Від $29/міс (Shopify)<br>Від 500 грн/міс (Хорошоп)</td>
+            <td class="our-col"><span class="yes">0 грн/міс</span><br>Тільки хостинг ~200-500 грн</td>
+          </tr>
+          <tr>
+            <td><strong>Комісія з продажів</strong></td>
+            <td><span class="no">5-30% з кожного замовлення</span></td>
+            <td><span class="partial">0-2% (Shopify Payments)</span></td>
+            <td class="our-col"><span class="yes">0% — нуль комісій</span></td>
+          </tr>
+          <tr>
+            <td><strong>Власність</strong></td>
+            <td><span class="no">Належить маркетплейсу</span></td>
+            <td><span class="no">Орендуєте платформу</span></td>
+            <td class="our-col"><span class="yes">100% ваше. Код, дані, домен</span></td>
+          </tr>
+          <tr>
+            <td><strong>База клієнтів</strong></td>
+            <td><span class="no">У маркетплейса</span></td>
+            <td><span class="partial">Обмежений доступ</span></td>
+            <td class="our-col"><span class="yes">Повний контроль</span></td>
+          </tr>
+          <tr>
+            <td><strong>Дизайн</strong></td>
+            <td><span class="no">Шаблонний, однаковий</span></td>
+            <td><span class="partial">Обмежені шаблони</span></td>
+            <td class="our-col"><span class="yes">Унікальний, під ваш бренд</span></td>
+          </tr>
+          <tr>
+            <td><strong>SEO</strong></td>
+            <td><span class="no">Мінімальний вплив</span></td>
+            <td><span class="partial">Базовий</span></td>
+            <td class="our-col"><span class="yes">Повний контроль SEO</span></td>
+          </tr>
+          <tr>
+            <td><strong>Нова Пошта</strong></td>
+            <td><span class="yes">Так</span></td>
+            <td><span class="partial">Через плагін</span></td>
+            <td class="our-col"><span class="yes">Глибока інтеграція</span></td>
+          </tr>
+          <tr>
+            <td><strong>Імпорт/експорт товарів</strong></td>
+            <td><span class="partial">Обмежено</span></td>
+            <td><span class="partial">Базовий CSV</span></td>
+            <td class="our-col"><span class="yes">XML, CSV, Excel, API</span></td>
+          </tr>
+          <tr>
+            <td><strong>Фіди для маркетплейсів</strong></td>
+            <td><span class="no">Не потрібно</span></td>
+            <td><span class="partial">Через плагін</span></td>
+            <td class="our-col"><span class="yes">Автоматично: Prom, Rozetka, Google</span></td>
+          </tr>
+          <tr>
+            <td><strong>Масштабування</strong></td>
+            <td><span class="partial">Обмежене</span></td>
+            <td><span class="partial">Обмежене планом</span></td>
+            <td class="our-col"><span class="yes">Без обмежень</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ТАРИФИ -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <h2>Тарифні плани</h2>
+      <p>Оберіть пакет, який відповідає вашим потребам. Всі ціни — фінальні, без прихованих платежів</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- СТАРТ -->
+      <div class="pricing-card">
+        <div class="pricing-name">Старт</div>
+        <div class="pricing-title">Швидкий запуск</div>
+        <div class="pricing-price">$800 <span>USD</span></div>
+        <div class="pricing-period">~33 000 грн • Термін: 7 днів</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> До 500 товарів</li>
+          <li><span class="check">✓</span> Адаптивний дизайн (mobile-first)</li>
+          <li><span class="check">✓</span> Каталог з фільтрами та пошуком</li>
+          <li><span class="check">✓</span> Нова Пошта (пошук відділень)</li>
+          <li><span class="check">✓</span> Накладений платіж</li>
+          <li><span class="check">✓</span> Базовий SEO (мета-теги, sitemap)</li>
+          <li><span class="check">✓</span> Google Analytics 4</li>
+          <li><span class="check">✓</span> Telegram-сповіщення</li>
+          <li><span class="check">✓</span> Адмін-панель управління</li>
+          <li><span class="check">✓</span> SSL-сертифікат</li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Онлайн-оплата</span></li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Імпорт товарів</span></li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Фіди для маркетплейсів</span></li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Мультимовність</span></li>
+        </ul>
+        <a href="#contact" class="pricing-btn">Обрати Старт</a>
+      </div>
+
+      <!-- БІЗНЕС -->
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Популярний</div>
+        <div class="pricing-name">Бізнес</div>
+        <div class="pricing-title">Повноцінний магазин</div>
+        <div class="pricing-price">$1 500 <span>USD</span></div>
+        <div class="pricing-period">~62 000 грн • Термін: 14 днів</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> <strong>Необмежена кількість товарів</strong></li>
+          <li><span class="check">✓</span> Унікальний дизайн під бренд</li>
+          <li><span class="check">✓</span> Все з пакету «Старт»</li>
+          <li><span class="check">✓</span> <strong>Monobank / LiqPay оплата</strong></li>
+          <li><span class="check">✓</span> <strong>Покупка частинами (розстрочка)</strong></li>
+          <li><span class="check">✓</span> <strong>Імпорт з XML / CSV / Excel</strong></li>
+          <li><span class="check">✓</span> <strong>Автосинхронізація цін і залишків</strong></li>
+          <li><span class="check">✓</span> <strong>Google Shopping фід</strong></li>
+          <li><span class="check">✓</span> Facebook Pixel + Google Ads</li>
+          <li><span class="check">✓</span> Email-сповіщення клієнтам</li>
+          <li><span class="check">✓</span> Промокоди та знижки</li>
+          <li><span class="check">✓</span> Особистий кабінет покупця</li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Мультимовність</span></li>
+          <li><span class="cross">—</span> <span style="color:#94a3b8">Фіди для Prom/Rozetka</span></li>
+        </ul>
+        <a href="#contact" class="pricing-btn primary">Обрати Бізнес</a>
+      </div>
+
+      <!-- ПРО -->
+      <div class="pricing-card">
+        <div class="pricing-name">Професійний</div>
+        <div class="pricing-title">Максимум можливостей</div>
+        <div class="pricing-price">$2 500 <span>USD</span></div>
+        <div class="pricing-period">~103 000 грн • Термін: 21 день</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> <strong>Все з пакету «Бізнес»</strong></li>
+          <li><span class="check">✓</span> <strong>Мультимовність (UK/RU/EN)</strong></li>
+          <li><span class="check">✓</span> <strong>Фіди: Prom, Rozetka, Facebook</strong></li>
+          <li><span class="check">✓</span> <strong>Система ролей (адмін, менеджер)</strong></li>
+          <li><span class="check">✓</span> <strong>Мультиімпорт (кілька постачальників)</strong></li>
+          <li><span class="check">✓</span> <strong>Модерація товарів перед публікацією</strong></li>
+          <li><span class="check">✓</span> Фасетна SEO-навігація</li>
+          <li><span class="check">✓</span> Розширені фільтри (характеристики)</li>
+          <li><span class="check">✓</span> Порівняння товарів</li>
+          <li><span class="check">✓</span> Список бажань</li>
+          <li><span class="check">✓</span> AI-генерація описів товарів</li>
+          <li><span class="check">✓</span> Система відгуків</li>
+          <li><span class="check">✓</span> Microsoft Clarity (heatmaps)</li>
+          <li><span class="check">✓</span> Пріоритетна підтримка 30 днів</li>
+        </ul>
+        <a href="#contact" class="pricing-btn">Обрати Професійний</a>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:24px;font-size:13px;color:#94a3b8">Оплата: 50% передоплата, 50% після запуску. Можлива оплата частинами.</p>
+  </div>
+</section>
+
+<!-- ПРОЦЕС -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2>Як це працює</h2>
+      <p>Від ідеї до запуску — прозорий процес без сюрпризів</p>
+    </div>
+    <div class="process-steps">
+      <div class="step">
+        <h3>Бриф та аналіз</h3>
+        <p>Обговорюємо ваш бізнес, товари, цільову аудиторію та конкурентів. Формуємо ТЗ.</p>
+      </div>
+      <div class="step">
+        <h3>Дизайн та структура</h3>
+        <p>Розробляємо дизайн, адаптовний під мобільні. Узгоджуємо з вами до початку верстки.</p>
+      </div>
+      <div class="step">
+        <h3>Розробка</h3>
+        <p>Верстка, інтеграції (оплата, доставка, аналітика), імпорт товарів, налаштування.</p>
+      </div>
+      <div class="step">
+        <h3>Тестування</h3>
+        <p>Перевіряємо кожну функцію: оформлення замовлення, оплата, мобільна версія, SEO.</p>
+      </div>
+      <div class="step">
+        <h3>Запуск!</h3>
+        <p>Розгортаємо на вашому домені. Навчаємо вас роботі з адмін-панеллю. Підтримка 14 днів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ГАРАНТІЇ -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2>Наші гарантії</h2>
+    </div>
+    <div class="guarantees-grid">
+      <div class="guarantee">
+        <div class="guarantee-icon">🔐</div>
+        <h3>Код — ваш</h3>
+        <p>Весь вихідний код передається вам. Ви не залежите від нас — можете розвивати сайт самостійно або з будь-яким іншим розробником.</p>
+      </div>
+      <div class="guarantee">
+        <div class="guarantee-icon">🛡️</div>
+        <h3>Фіксована ціна</h3>
+        <p>Ціна в договорі — фінальна. Ніяких «доплат за додаткові функції», якщо це входить у пакет.</p>
+      </div>
+      <div class="guarantee">
+        <div class="guarantee-icon">⏱️</div>
+        <h3>Фіксований термін</h3>
+        <p>Дедлайн прописаний у договорі. Затримка з нашого боку — знижка 5% за кожен робочий день.</p>
+      </div>
+      <div class="guarantee">
+        <div class="guarantee-icon">🔄</div>
+        <h3>14 днів підтримки</h3>
+        <p>Після запуску — 14 днів безкоштовних виправлень та консультацій. Пакет «Професійний» — 30 днів.</p>
+      </div>
+      <div class="guarantee">
+        <div class="guarantee-icon">📚</div>
+        <h3>Навчання</h3>
+        <p>Детальна інструкція + відео-урок по роботі з адмін-панеллю. Ви зможете керувати магазином самостійно.</p>
+      </div>
+      <div class="guarantee">
+        <div class="guarantee-icon">🚀</div>
+        <h3>Сучасний стек</h3>
+        <p>Ваш сайт побудований на технологіях 2025-2026 року. Він буде актуальним і швидким ще мінімум 5 років.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="contact">
+  <h2>Готові запустити свій магазин?</h2>
+  <p>Зв'яжіться з нами — обговоримо ваш проект та підберемо оптимальний пакет</p>
+  <div class="cta-contacts">
+    <a href="https://t.me/+380994019521" class="cta-contact">
+      <span>📱</span> Telegram
+    </a>
+    <a href="https://wa.me/380994019521" class="cta-contact">
+      <span>💬</span> WhatsApp
+    </a>
+    <a href="tel:+380994019521" class="cta-contact">
+      <span>📞</span> +38 099 401 95 21
+    </a>
+    <a href="mailto:info@alko-technics.kiev.ua" class="cta-contact">
+      <span>✉️</span> Email
+    </a>
+  </div>
+</div>
+
+<div class="footer">
+  &copy; 2026 • Розробка інтернет-магазинів під ключ
+</div>
+
+</body>
+</html>

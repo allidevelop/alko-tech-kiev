@@ -1,0 +1,52 @@
+# AL-KO Rozetka XML Proxy
+# .htaccess configuration
+
+# Включаем RewriteEngine
+RewriteEngine On
+
+# Перенаправляем все запросы на index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Запрещаем доступ к конфигурационным файлам
+<FilesMatch "^(config\.php|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Запрещаем листинг директорий
+Options -Indexes
+
+# Запрещаем доступ к папкам cache и logs
+<IfModule mod_rewrite.c>
+    RewriteRule ^cache/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+</IfModule>
+
+# Устанавливаем правильный Content-Type для XML
+<IfModule mod_mime.c>
+    AddType application/xml .xml
+</IfModule>
+
+# Сжатие для уменьшения трафика
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE text/xml
+</IfModule>
+
+# Кеширование на стороне клиента
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/xml "access plus 1 hour"
+</IfModule>
+
+# Устанавливаем кодировку UTF-8
+AddDefaultCharset UTF-8
+
+# Увеличиваем лимиты PHP для больших XML файлов
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 120
+    php_value post_max_size 64M
+</IfModule>

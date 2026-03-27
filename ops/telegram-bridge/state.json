@@ -1,0 +1,11 @@
+{
+  "sessionId": "5edcf3ff-53fa-43a4-893b-701d45c2c75a",
+  "permissionMode": "bypassPermissions",
+  "model": "claude-opus-4-5-20251101",
+  "autoApprove": false,
+  "systemPrompt": null,
+  "contextUsed": 151754,
+  "contextWindow": 200000,
+  "lastCost": 0.8624809999999999,
+  "totalCost": 29.800358000000003
+}

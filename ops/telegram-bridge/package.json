@@ -1,0 +1,12 @@
+{
+  "name": "alko-technics-telegram-bridge",
+  "version": "1.0.0",
+  "description": "Telegram <-> Claude Code Bridge for Alko Technics Project",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "keywords": ["telegram", "claude", "bridge", "alko-technics"],
+  "license": "MIT",
+  "dependencies": {}
+}

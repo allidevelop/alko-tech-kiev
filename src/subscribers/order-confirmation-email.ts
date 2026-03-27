@@ -7,6 +7,17 @@ import { orderConfirmationTemplate } from "../modules/resend-notification/templa
  * Runs in parallel with Telegram notification — failure does NOT block the order.
  */
 
+function getMoneyNum(amount: any): number {
+  if (amount == null) return 0
+  if (typeof amount === "number") return amount
+  if (typeof amount === "string") return parseFloat(amount) || 0
+  if (typeof amount === "object" && amount !== null) {
+    const raw = amount.value ?? amount.numeric ?? String(amount)
+    return parseFloat(String(raw)) || 0
+  }
+  return 0
+}
+
 function formatMoney(amount: any): string {
   if (amount == null) return "0"
   let num: number
@@ -50,7 +61,10 @@ export default async function orderConfirmationEmailHandler({
         "currency_code",
         "items.*",
         "shipping_address.*",
+        "shipping_methods.*",
         "customer.*",
+        "payment_collections.*",
+        "payment_collections.payments.*",
       ],
       filters: { id: data.id },
     })
@@ -78,7 +92,9 @@ export default async function orderConfirmationEmailHandler({
       price: `${formatMoney(item.unit_price)} ₴`,
     }))
 
+    const itemTotal = getMoneyNum(order.item_subtotal)
     const total = `${formatMoney(order.item_subtotal)} ₴`
+    const isFreeShipping = itemTotal >= 2000
 
     const shippingAddress = [
       order.shipping_address?.city,
@@ -87,12 +103,26 @@ export default async function orderConfirmationEmailHandler({
       .filter(Boolean)
       .join(", ") || "Уточнюється"
 
+    const shippingMethod = (order as any).shipping_methods?.[0]?.name || undefined
+
+    const paymentProviderMap: Record<string, string> = {
+      pp_system_default: "За замовчуванням",
+      pp_cod_cod: "Оплата при отриманні (накладений платіж)",
+      pp_monobank_monobank: "Monobank (оплата картою)",
+      pp_liqpay_liqpay: "LiqPay (Visa/Mastercard)",
+    }
+    const paymentProviderId = (order as any).payment_collections?.[0]?.payments?.[0]?.provider_id
+    const paymentMethod = paymentProviderId ? (paymentProviderMap[paymentProviderId] || paymentProviderId) : undefined
+
     const { subject, html } = orderConfirmationTemplate({
       orderNumber: String(order.display_id || order.id),
       customerName,
       items,
       total,
       shippingAddress,
+      shippingMethod,
+      isFreeShipping,
+      paymentMethod,
       storeName: "Alko-Technics",
     })
 

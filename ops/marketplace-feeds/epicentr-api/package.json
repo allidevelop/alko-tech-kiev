@@ -1,0 +1,19 @@
+{
+  "name": "epicentr-api",
+  "version": "1.0.0",
+  "description": "API integration with Epicentr Marketplace",
+  "main": "get-categories.js",
+  "scripts": {
+    "categories": "node get-categories.js",
+    "mappings": "node category-mappings.js",
+    "update-mappings": "node category-mappings.js update",
+    "search": "node category-mappings.js search"
+  },
+  "keywords": [
+    "epicentr",
+    "marketplace",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC"
+}
