@@ -243,6 +243,24 @@ export default async function orderTelegramHandler({
 
     await sendTelegramMessage(botToken, chatId, message)
 
+    // Push notification (ntfy.sh) — instant "ka-ching" sound
+    try {
+      const itemTotal = getMoneyNum(order.item_subtotal)
+      const customerName = [order.shipping_address?.first_name, order.shipping_address?.last_name].filter(Boolean).join(" ") || "Клієнт"
+      const productNames = (order.items || []).map((i: any) => i.title || i.product_title).filter(Boolean).join(", ")
+      const pushBody = `${customerName} — ${productNames}\n💰 ${formatMoney(itemTotal)} ${currency}`
+
+      await fetch("https://ntfy.sh/alko_orders", {
+        method: "POST",
+        headers: {
+          "Title": `Замовлення #${order.display_id}!`,
+          "Priority": "high",
+          "Tags": "money_with_wings",
+        },
+        body: pushBody,
+      })
+    } catch { /* push is non-critical */ }
+
     logger.info(
       `Telegram notification sent for order #${order.display_id || order.id}`
     )
