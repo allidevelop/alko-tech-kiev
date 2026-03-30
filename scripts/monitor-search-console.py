@@ -15,23 +15,23 @@ from datetime import datetime, timedelta
 import google.auth.transport.requests
 from google.oauth2.credentials import Credentials
 
-# Config
-CLIENT_ID = "331048759832-n7lag4ha5i1m770560pab9du63n9eeec.apps.googleusercontent.com"
-CLIENT_SECRET = "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"
-
-# Try reading token from .env
-REFRESH_TOKEN = ""
+# Config — all secrets read from .env
 env_path = "/home/developer/projects/alko-store/.env"
+_env = {}
 if os.path.exists(env_path):
     with open(env_path) as f:
         for line in f:
-            if line.startswith("GSC_REFRESH_TOKEN="):
-                REFRESH_TOKEN = line.strip().split("=", 1)[1]
+            if "=" in line and not line.startswith("#"):
+                k, v = line.strip().split("=", 1)
+                _env[k] = v
 
-SITE = "sc-domain:alko-technics.kiev.ua"
-TELEGRAM_BOT = "8080753063:AAF3JMs_4xzaJvkmy_1gtO16N8ElU_wgaSc"
-TELEGRAM_CHAT = "6552346228"
-PAGESPEED_KEY = "AIzaSyA_Qkzo6L6aWvgPjaqV0eAPKEKZDkFwxHg"
+CLIENT_ID = _env.get("GSC_CLIENT_ID", "")
+CLIENT_SECRET = _env.get("GSC_CLIENT_SECRET", "")
+REFRESH_TOKEN = _env.get("GSC_REFRESH_TOKEN", "")
+SITE = _env.get("GSC_SITE", "sc-domain:alko-technics.kiev.ua")
+TELEGRAM_BOT = _env.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT = _env.get("TELEGRAM_CHAT_ID", "")
+PAGESPEED_KEY = _env.get("GOOGLE_PAGESPEED_API_KEY", "")
 
 
 def get_credentials():
