@@ -57,3 +57,6 @@ ops/telegram-bridge/received_images/
 ops/telegram-bridge/received_voice/
 ops/marketplace-feeds/*/cache/
 ops/marketplace-feeds/*/logs/
+google-ads.yaml
+scripts/monitor-merchant-center.py
+.mcp.json
