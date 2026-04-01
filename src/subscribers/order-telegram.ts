@@ -250,16 +250,20 @@ export default async function orderTelegramHandler({
       const productNames = (order.items || []).map((i: any) => i.title || i.product_title).filter(Boolean).join(", ")
       const pushBody = `${customerName} — ${productNames}\n💰 ${formatMoney(itemTotal)} ${currency}`
 
-      await fetch("https://ntfy.sh/alko_orders", {
+      const ntfyTitle = `Order #${order.display_id}`
+      const ntfyRes = await fetch("https://ntfy.sh/alko_orders", {
         method: "POST",
         headers: {
-          "Title": `Замовлення #${order.display_id}!`,
+          "Title": ntfyTitle,
           "Priority": "high",
           "Tags": "money_with_wings",
         },
         body: pushBody,
       })
-    } catch { /* push is non-critical */ }
+      logger.info(`[ntfy] Push sent for order #${order.display_id}, status: ${ntfyRes.status}`)
+    } catch (ntfyErr: any) {
+      logger.warn(`[ntfy] Push failed for order #${order.display_id}: ${ntfyErr?.message}`)
+    }
 
     logger.info(
       `Telegram notification sent for order #${order.display_id || order.id}`
