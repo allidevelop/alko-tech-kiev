@@ -428,9 +428,28 @@ def get_review_count(price: float, is_bestseller: bool) -> int:
 
 
 def random_date(months_back: int = 6) -> datetime:
+    """Random date in seasonal range: March-September (garden season)."""
     now = datetime.now()
-    days_back = random.randint(7, months_back * 30)
-    dt = now - timedelta(days=days_back)
+    current_year = now.year
+
+    # Seasonal months: March(3) - September(9) across this year and last year
+    seasonal_ranges = []
+    # Last year season
+    seasonal_ranges.append((datetime(current_year - 1, 3, 15), datetime(current_year - 1, 9, 30)))
+    # This year season (up to now or September)
+    season_end = min(now, datetime(current_year, 9, 30))
+    if now.month >= 3:
+        seasonal_ranges.append((datetime(current_year, 3, 1), season_end))
+
+    # Pick a random range
+    start, end = random.choice(seasonal_ranges)
+    if end <= start:
+        end = start + timedelta(days=30)
+
+    days_range = (end - start).days
+    if days_range <= 0:
+        days_range = 30
+    dt = start + timedelta(days=random.randint(0, days_range))
     dt = dt.replace(
         hour=random.randint(7, 22),
         minute=random.randint(0, 59),
