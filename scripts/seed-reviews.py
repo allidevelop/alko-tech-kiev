@@ -352,52 +352,86 @@ def humanize(text: str) -> str:
     return text
 
 
-def get_name(lang: str) -> str:
-    """Get a random name, ~80% matching language, ~20% mixed."""
-    r = random.random()
-    if r < 0.80:
-        return generate_name(lang)
-    else:
-        return generate_name("ru" if lang == "uk" else "uk")
+def get_name(lang: str, used_names: set) -> str:
+    """Get a random name, avoiding base-name repeats within a product."""
+    for _ in range(20):  # max attempts
+        r = random.random()
+        if r < 0.80:
+            name = generate_name(lang)
+        else:
+            name = generate_name("ru" if lang == "uk" else "uk")
+
+        # Extract base first name for dedup (e.g. "Василь" from "Василь Д.")
+        base = name.split()[0].rstrip(".") if not name[0].isascii() else name.split("_")[0]
+        # Also check transliteration pairs
+        pairs = {
+            "Василь": "Василий", "Олександр": "Александр", "Андрій": "Андрей",
+            "Сергій": "Сергей", "Дмитро": "Дмитрий", "Наталія": "Наталья",
+            "Тетяна": "Татьяна", "Ірина": "Ирина", "Олена": "Елена",
+            "Юлія": "Юлия", "Михайло": "Михаил", "Євген": "Евгений",
+            "Петро": "Пётр", "Юрій": "Юрий", "Ігор": "Игорь",
+            "Оксана": "Оксана", "Богдан": "Богдан", "Артем": "Артём",
+            "Марія": "Мария", "Вікторія": "Виктория", "Галина": "Галина",
+        }
+        alt = pairs.get(base, "")
+        rev_pairs = {v: k for k, v in pairs.items()}
+        alt2 = rev_pairs.get(base, "")
+
+        if base not in used_names and alt not in used_names and alt2 not in used_names:
+            used_names.add(base)
+            if alt: used_names.add(alt)
+            if alt2: used_names.add(alt2)
+            return name
+
+    return generate_name(lang)  # fallback
 
 
-def get_template(product_title: str, lang: str, rating: int, used: set) -> str:
-    """Get review text, avoiding duplicates within same product."""
+def get_template(product_title: str, lang: str, rating: int, used_texts: set) -> str:
+    """Get review text, no duplicates — tracks actual text + paired translations."""
     title_lower = product_title.lower()
-    templates = TEMPLATES_UK if lang == "uk" else TEMPLATES_RU
 
-    if rating <= 3:
-        complaints = COMPLAINTS_UK if lang == "uk" else COMPLAINTS_RU
-        pool = [c for c in complaints if c not in used]
-        if not pool:
-            pool = complaints
-        text = random.choice(pool)
-        used.add(text)
+    def pick_unique(pool: list, fallback_pool: list = None) -> str:
+        """Pick a text not yet used in this product."""
+        available = [t for t in pool if t not in used_texts]
+        if not available and fallback_pool:
+            available = [t for t in fallback_pool if t not in used_texts]
+        if not available:
+            available = pool  # last resort
+        text = random.choice(available)
+        used_texts.add(text)
         return text
 
-    if rating == 4 and random.random() < 0.4:
-        complaints = COMPLAINTS_UK if lang == "uk" else COMPLAINTS_RU
-        pool = [c for c in complaints if c not in used]
-        if not pool:
-            pool = complaints
-        text = random.choice(pool)
-        used.add(text)
+    # For complaints (3-4 stars)
+    if rating <= 3 or (rating == 4 and random.random() < 0.4):
+        pool = COMPLAINTS_UK if lang == "uk" else COMPLAINTS_RU
+        # Also mark the paired translation as used
+        paired = COMPLAINTS_RU if lang == "uk" else COMPLAINTS_UK
+        text = pick_unique(pool)
+        idx = pool.index(text) if text in pool else -1
+        if 0 <= idx < len(paired):
+            used_texts.add(paired[idx])
         return text
 
-    for keyword, pool_list in templates.items():
+    # Match category
+    category_key = "default"
+    for keyword in TEMPLATES_UK:
         if keyword != "default" and keyword in title_lower:
-            pool = [t for t in pool_list if t not in used]
-            if not pool:
-                pool = pool_list
-            text = random.choice(pool)
-            used.add(text)
-            return text
+            category_key = keyword
+            break
 
-    pool = [t for t in templates["default"] if t not in used]
+    pool = (TEMPLATES_UK if lang == "uk" else TEMPLATES_RU).get(category_key, [])
+    paired_pool = (TEMPLATES_RU if lang == "uk" else TEMPLATES_UK).get(category_key, [])
+
     if not pool:
-        pool = templates["default"]
-    text = random.choice(pool)
-    used.add(text)
+        pool = (TEMPLATES_UK if lang == "uk" else TEMPLATES_RU)["default"]
+        paired_pool = (TEMPLATES_RU if lang == "uk" else TEMPLATES_UK)["default"]
+
+    text = pick_unique(pool, (TEMPLATES_UK if lang == "uk" else TEMPLATES_RU)["default"])
+    # Mark paired translation as used too
+    idx = pool.index(text) if text in pool else -1
+    if 0 <= idx < len(paired_pool):
+        used_texts.add(paired_pool[idx])
+
     return text
 
 
@@ -498,7 +532,8 @@ def main():
 
         to_add = target_count - current_count
         products_with_reviews += 1
-        used_texts = set()  # Track used texts per product to avoid duplicates
+        used_texts = set()    # Track texts + their translations to avoid duplicates
+        used_names = set()    # Track base first names to avoid Василь+Василий
 
         for _ in range(to_add):
             rating = get_rating()
@@ -506,7 +541,7 @@ def main():
                 continue
 
             lang = "uk" if random.random() < 0.65 else "ru"
-            name = get_name(lang)
+            name = get_name(lang, used_names)
             comment = humanize(get_template(title, lang, rating, used_texts))
             created = random_date(5)
 
