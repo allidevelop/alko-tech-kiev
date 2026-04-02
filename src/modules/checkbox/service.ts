@@ -57,13 +57,14 @@ class CheckboxModuleService {
       quantity: number
       unit_price: number // UAH
     }>
+    payment_type?: "CASH" | "CARD"
     payment_provider_id: string
     total: number // UAH
     email: string
   }): Promise<{ receiptId: string } | null> {
-    // Skip COD orders
-    if (order.payment_provider_id.includes("cod")) {
-      this.logger_.info("[Checkbox] COD payment — skipping fiscal receipt")
+    // Skip IBAN transfers only (per accountant: all payments except IBAN are fiscalized)
+    if (order.payment_provider_id.includes("iban") || order.payment_provider_id.includes("bank_transfer")) {
+      this.logger_.info("[Checkbox] IBAN transfer — skipping fiscal receipt")
       return null
     }
 
@@ -80,10 +81,14 @@ class CheckboxModuleService {
       quantity: Math.round(item.quantity * 1000), // units → thousandths
     }))
 
-    // Payment — all non-COD are CARD
+    // Payment type: COD = CASH, online = CARD
+    const payType = order.payment_type || (
+      order.payment_provider_id.includes("cod") || order.payment_provider_id.includes("system_default")
+        ? "CASH" : "CARD"
+    )
     const payments: CheckboxPayment[] = [
       {
-        type: "CARD",
+        type: payType,
         value: Math.round(order.total * 100), // UAH → kopecks
       },
     ]

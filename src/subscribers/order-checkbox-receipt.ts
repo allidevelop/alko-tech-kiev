@@ -65,15 +65,19 @@ export default async function orderCheckboxReceiptHandler({
       if (paymentProviderId) break
     }
 
-    // Skip COD
-    if (paymentProviderId.includes("cod")) {
+    // Skip IBAN transfers only (per accountant: all payments except IBAN are fiscalized)
+    if (paymentProviderId.includes("iban") || paymentProviderId.includes("bank_transfer")) {
       logger.info(
-        `[Checkbox] Order #${order.display_id} is COD — skipping fiscal receipt`
+        `[Checkbox] Order #${order.display_id} is IBAN transfer — skipping fiscal receipt`
       )
       return
     }
 
     const checkboxService = container.resolve("checkbox") as any
+
+    // Determine payment type for fiscal receipt
+    const isCOD = paymentProviderId.includes("cod") || paymentProviderId.includes("system_default")
+    const paymentType = isCOD ? "CASH" : "CARD"
 
     const result = await checkboxService.createOrderReceipt({
       items: (order.items || []).map((item: any) => ({
@@ -83,6 +87,7 @@ export default async function orderCheckboxReceiptHandler({
         quantity: item.quantity || 1,
         unit_price: toNumber(item.unit_price),
       })),
+      payment_type: paymentType,
       payment_provider_id: paymentProviderId,
       total: toNumber(order.item_subtotal),
       email: order.email || "",
