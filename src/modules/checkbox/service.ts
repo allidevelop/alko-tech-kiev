@@ -81,11 +81,8 @@ class CheckboxModuleService {
       quantity: Math.round(item.quantity * 1000), // units → thousandths
     }))
 
-    // Payment type: COD = CASH, online = CARD
-    const payType = order.payment_type || (
-      order.payment_provider_id.includes("cod") || order.payment_provider_id.includes("system_default")
-        ? "CASH" : "CARD"
-    )
+    // All payments are CARD (bezgotivkoviy) — COD money comes through NP, not cash register
+    const payType: "CASH" | "CARD" = "CARD"
     const payments: CheckboxPayment[] = [
       {
         type: payType,
